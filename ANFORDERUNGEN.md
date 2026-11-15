@@ -1,0 +1,63 @@
+# FLORA – Die Hüter der vergessenen Pflanzen
+
+Abgestimmte Anforderungen (Stand 2026-11-15). Grundlage für die Umsetzung.
+
+## Idee
+Handy-App (im Browser, PWA) für Jugendliche und Erwachsene in ganz Deutschland.
+Man findet draußen echte wildwachsende Pflanzen, fotografiert sie und sammelt sie wie in einem
+Sammelspiel. Aus jedem Fund wächst im Gewächshaus eine Spielpflanze, die man pflegt und trainiert.
+Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spiels).
+
+## Version 1 (MVP): Entdecken draußen
+- Foto + GPS-Standort; Art wird automatisch über Pl@ntNet erkannt.
+- Ohne Internet: Foto und Standort werden gespeichert, Erkennung folgt automatisch, sobald Netz da ist.
+- Solange kein Pl@ntNet-Schlüssel vorhanden ist: Art zum Testen selbst auswählen.
+- Bei jeder neuen Art: Entdeckungs-Animation mit Name, Seltenheit, Typ, Eigenschaften, Beschreibung.
+- Das eigene Foto wird zur Sammelkarte mit Rahmen in der Farbe der Seltenheit.
+- Jede erkannte Art zählt (alle wildwachsenden Arten Deutschlands, ca. 4.000).
+- Ca. 30 besondere Arten bekommen zusätzlich: gezeichnete Figur (zuerst von Claude als SVG,
+  später austauschbar gegen Profi-Zeichnungen), eigene Fähigkeiten, Entwicklungsformen, Geschichte.
+- Herbarium mit allen Arten; nicht gefundene als Silhouette; Filter nach Seltenheit;
+  Fortschritt je Lebensraum und gesamt.
+- Lebensräume (statt Fantasie-Biome): z. B. Wald, Moor, Heide, Küste, Alpen, Magerrasen,
+  Gewässer, Stadt.
+
+### Seltenheit (aus Roter Liste Deutschland + Verbreitung)
+| Stufe | Bedeutung |
+|---|---|
+| Gewöhnlich | weit verbreitet, ungefährdet |
+| Ungewöhnlich | zerstreut, ungefährdet |
+| Selten | Vorwarnliste (V) |
+| Episch | RL 3 (gefährdet), G (Gefährdung unbekannten Ausmaßes) |
+| Legendär | RL 2 (stark gefährdet), R (extrem selten) |
+| Mythisch | RL 1 (vom Aussterben bedroht), RL 0 (ausgestorben/verschollen, Wiederfund) |
+| (D, Daten unzureichend) | nach Verbreitung: Gewöhnlich bis Selten |
+
+## Version 1 (MVP): Gewächshaus
+- Jeder echte Fund gibt einen virtuellen Samen; daraus wächst eine Spielpflanze.
+- Pflege: Gießen, Düngen, Licht regulieren, Boden verbessern, Beschneiden, Krankheiten behandeln.
+- Training: Wachstum, Wurzeln, Licht, Resistenz, Anpassung.
+- Werte: Wachstum, Vitalität, Widerstandsfähigkeit, Anpassungsfähigkeit, Energie, Seltenheitspotenzial.
+- Level 1–50, Fähigkeiten (z. B. Tiefenwurzler, Nachtblüte, Frostschutz), Entwicklungsformen
+  abhängig von Pflege, Training und Bedingungen.
+- Individuelle Bedürfnisse je Art bzw. Lebensraum.
+- Zeit: echte Zeit, sanft – wer ein paar Tage nicht spielt, verliert nichts; die Pflanze wartet.
+- Besondere Bedingungen (Nacht, Regen, Höhe …) gibt es nur im Gewächshaus, nicht bei Funden draußen.
+
+## Später (nicht in Version 1)
+- Wettbewerbe: Werte-Wettbewerbe gegen den Computer + Natur-Challenges draußen.
+- Spielerlevel, Erfahrungspunkte, Tagesaufgaben, Missionen, Erfolge/Abzeichen, Profil.
+- Mitspieler (Anmeldung, Server, Rangliste). Dann sehen alle die Fundorte;
+  Rote-Liste-Arten mit 300 m Unschärfe.
+
+## Technik
+- React + TypeScript + Vite, PWA. Spielmechanik, Daten und Oberfläche getrennt.
+- Spielstand auf dem Gerät gespeichert (Fotos in IndexedDB, Spielstand robust mit Versionierung).
+- Zentrale Konfiguration für Balance und Wahrscheinlichkeiten, reproduzierbarer Zufall.
+- Erweiterbar: neue Arten, Lebensräume, Fähigkeiten ohne Umbau.
+- Eigenes Repository `flora` (getrennt von der PflanzenKarte), Veröffentlichung über GitHub Pages.
+
+## Offene Punkte vor dem Programmieren
+1. Repository `flora` anlegen, Claude-App dafür installieren.
+2. Pl@ntNet-Zugang anlegen (my.plantnet.org); Schlüssel auf die Pages-Adresse beschränken.
+3. Quellen und Nutzungsrechte für Artenliste und Rote Liste Deutschland prüfen.
