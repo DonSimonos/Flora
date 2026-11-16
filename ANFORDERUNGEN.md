@@ -67,5 +67,10 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
   Kategorie 1 und 0 sowie Bestand „extrem selten“ nur als TK25-Rasterfeld (ca. 11 × 11 km);
   Kategorien 2, 3, G, R auf etwa 300 m vergröbert; sonst genau. Eigene Funde sieht man immer genau.
 
+## Erkennung
+- Pl@ntNet ist eingerichtet (seit 16.11.2026): Schlüssel als GitHub-Secret `PLANTNET_KEY`,
+  bei Pl@ntNet freigegeben für `https://donsimonos.github.io`. Kostenlos bis 500 Erkennungen pro Tag.
+
 ## Offene Punkte
-1. Pl@ntNet-Schlüssel als GitHub-Secret `PLANTNET_KEY` hinterlegen (Konto ist angelegt, Domain freigegeben).
+- Ausbau des Gewächshauses: Vorschläge A–G vom 16.11.2026 (empfohlen: Lebensraum-Räume, Bestäuber,
+  danach Wettbewerbe) – Entscheidung steht aus.
