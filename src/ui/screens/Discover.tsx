@@ -4,7 +4,8 @@ import { SPECIES } from '../../data/species';
 import { BALANCE } from '../../game/config';
 import { addFind, confirmFind, deleteFind, uid } from '../../game/game';
 import { matchSpecies } from '../../game/catalog';
-import { rarityOf } from '../../game/rarity';
+import { rarityFrom, rarityOf } from '../../game/rarity';
+import { searchRedList } from '../../game/redlist';
 import type { Candidate, Find } from '../../game/types';
 import { currentFix, exifGps, onGps, startGps, type Fix } from '../../services/geo';
 import { preparePhoto } from '../../services/image';
@@ -227,9 +228,17 @@ function SpeciesPicker({ onPick, onOwn }: { onPick: (id: string) => void; onOwn:
     const n = q.trim().toLowerCase();
     return SPECIES.filter((s) => !n || s.de.toLowerCase().includes(n) || s.sci.toLowerCase().includes(n)).slice(0, 40);
   }, [q]);
+  // all other species of Germany from the Rote Liste
+  const more = useMemo(() => {
+    const builtIn = new Set(list.map((s) => s.id));
+    return searchRedList(q, 30).filter((e) => {
+      const m = matchSpecies(e.name);
+      return !m || !builtIn.has(m.id);
+    });
+  }, [q, list]);
   return (
     <div className="stack">
-      <input className="search" placeholder="Art suchen, z. B. Sonnentau" value={q} onChange={(e) => setQ(e.target.value)} />
+      <input className="search" placeholder="Art suchen, z. B. Sonnentau oder Utricularia" value={q} onChange={(e) => setQ(e.target.value)} />
       {list.map((s) => (
         <button key={s.id} className="cand" onClick={() => onPick(s.id)}>
           <PlantArt species={s} className="mini-art" />
@@ -240,17 +249,31 @@ function SpeciesPicker({ onPick, onOwn }: { onPick: (id: string) => void; onOwn:
           <RarityBadge rarity={rarityOf(s)} />
         </button>
       ))}
-      {list.length === 0 && <p className="muted">Keine Art gefunden.</p>}
+      {more.length > 0 && (
+        <>
+          <p className="muted small">Weitere Arten Deutschlands (Rote Liste):</p>
+          {more.map((e) => (
+            <button key={e.name} className="cand" onClick={() => onOwn(e.de, e.name)}>
+              <div className="grow">
+                <b>{e.de || e.name}</b>
+                <div className="muted small"><i>{e.name}</i></div>
+              </div>
+              <RarityBadge rarity={rarityFrom(e.rl, e.bestand)} />
+            </button>
+          ))}
+        </>
+      )}
+      {list.length === 0 && more.length === 0 && <p className="muted">Keine Art gefunden.</p>}
       {!own ? (
         <button className="btn ghost" onClick={() => { setOwn(true); setDe(q.trim()); }}>
-          Art nicht in der Liste? Selbst eintragen
+          Nicht gefunden? Selbst eintragen
         </button>
       ) : (
         <div className="panel stack">
           <b>Eigene Art eintragen</b>
           <input className="search" placeholder="Deutscher Name, z. B. Kleiner Wasserschlauch" value={de} onChange={(e) => setDe(e.target.value)} />
           <input className="search" placeholder="Wissenschaftlicher Name (freiwillig)" value={sci} onChange={(e) => setSci(e.target.value)} autoCapitalize="sentences" />
-          <p className="muted tiny">Die Art kommt unter „Weitere entdeckte Arten“ ins Herbarium. Ihre Seltenheit wird ergänzt, sobald die offiziellen Rote-Liste-Daten eingebunden sind.</p>
+          <p className="muted tiny">Die Art kommt unter „Weitere entdeckte Arten“ ins Herbarium. Steht der wissenschaftliche Name in der Roten Liste, bekommt sie automatisch die passende Seltenheit.</p>
           <button className="btn primary" disabled={!de.trim() && !sci.trim()} onClick={() => onOwn(de.trim(), sci.trim())}>Eintragen</button>
         </div>
       )}

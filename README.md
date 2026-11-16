@@ -32,5 +32,10 @@ Für die Erkennung lokal eine Datei `.env.local` mit `VITE_PLANTNET_KEY=...` anl
 
 - Pflanzenbestimmung: [Pl@ntNet](https://plantnet.org)
 - Karte: © OpenStreetMap-Mitwirkende
-- Rote Liste: Metzing et al. (2018), Rote-Liste-Zentrum – **derzeit vorläufige Testdaten**,
-  Nutzungsanfrage läuft.
+- Rote Liste: Metzing et al. (2018): Rote Liste und Gesamtartenliste der Farn- und Blütenpflanzen
+  (Trachaeophyta) Deutschlands. – In: Metzing, D.; Hofbauer, N.; Ludwig, G. & Matzke-Hajek, G. (Red.):
+  Rote Liste gefährdeter Tiere, Pflanzen und Pilze Deutschlands. Band 7: Pflanzen. – Münster
+  (Landwirtschaftsverlag). – Naturschutz und Biologische Vielfalt 70 (7): 13-358. –
+  URL: https://www.rote-liste-zentrum.de/die-roten-listen/download-pflanzen/ –
+  Lizenz [CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/deed.de). Die Werte werden
+  unverändert übernommen (`tools/import_rote_liste.py` → `src/data/rote-liste-2018.json`).

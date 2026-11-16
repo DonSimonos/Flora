@@ -27,6 +27,8 @@ dort Änderungen am Konzept festhalten (alten Text ersetzen, nicht stapeln).
 ## Feste Entscheidungen
 - Echte Arten, echtes Gelände, GPS. Ganz Deutschland. Jugendliche und Erwachsene.
 - Version 1: Entdecken draußen + Gewächshaus. Später: Wettbewerbe, Spielerlevel/Missionen, Mitspieler.
-- Rote-Liste-Angaben in `species.ts` sind vorläufig, bis die offiziellen Daten freigegeben sind.
-- Fundorte sind in Version 1 nur für den Spieler selbst sichtbar; mit Mitspielern später alle,
-  Rote-Liste-Arten mit 300 m Unschärfe.
+- Rote Liste: offizielle Daten (Metzing et al. 2018) in `src/data/rote-liste-2018.json`, erzeugt mit
+  `tools/import_rote_liste.py`. Lizenz CC BY-ND 4.0: Werte nie ändern, Quelle immer sichtbar nennen
+  (`src/game/redlist.ts` hat Zitat und Lizenz). Eingebaute Arten holen sich Kategorie/Bestand von dort.
+- Fundorte sind in Version 1 nur für den Spieler selbst sichtbar. Für andere später nur über
+  `publicLocation()` in `src/game/privacy.ts`: RL 1/0 und Bestand „es“ als TK25-Feld, RL 2/3/G/R ca. 300 m.
