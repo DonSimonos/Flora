@@ -10,6 +10,7 @@ import { useGame, useNow } from '../../store/store';
 import { SpeciesCard } from '../components/common';
 import type { Tab } from '../App';
 import { SourcesSheet } from '../components/Sources';
+import { BUILD_TEXT } from '../../version';
 
 export function Home({ go }: { go: (t: Tab) => void }) {
   const state = useGame();
@@ -127,7 +128,10 @@ export function Home({ go }: { go: (t: Tab) => void }) {
       <p className="notice">
         <b>Naturschutz zuerst:</b> Gesammelt wird nur per Foto. Nichts pflücken oder ausgraben, in Schutzgebieten auf den Wegen bleiben.
       </p>
-      <button className="link small" onClick={() => setSources(true)}>Quellen & Lizenzen</button>
+      <div className="row tiny muted" style={{ justifyContent: 'space-between' }}>
+        <button className="link small" onClick={() => setSources(true)}>Quellen & Lizenzen</button>
+        <span>Version vom {BUILD_TEXT}</span>
+      </div>
       {sources && <SourcesSheet onClose={() => setSources(false)} />}
     </div>
   );
