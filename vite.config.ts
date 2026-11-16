@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 // base './' so the app runs from the GitHub Pages sub-path (/Flora/).
 export default defineConfig({
   base: './',
+  define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
   plugins: [
     react(),
     VitePWA({
