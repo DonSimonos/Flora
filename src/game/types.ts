@@ -4,10 +4,10 @@
 export type RarityId = 'gewoehnlich' | 'ungewoehnlich' | 'selten' | 'episch' | 'legendaer' | 'mythisch';
 
 /** Rote-Liste-Kategorie Deutschland (Metzing et al. 2018), '?' = keine Daten. */
-export type RedListCat = '0' | '1' | '2' | '3' | 'G' | 'R' | 'V' | 'D' | '*' | '?';
+export type RedListCat = '0' | '1' | '2' | '3' | 'G' | 'R' | 'V' | 'D' | '*' | 'nb' | '?';
 
 /** Aktuelle Bestandssituation nach Rote-Liste-Methodik. */
-export type Bestand = 'ex' | 'es' | 'ss' | 's' | 'mh' | 'h' | 'sh' | '?';
+export type Bestand = 'ex' | 'es' | 'ss' | 's' | 'mh' | 'h' | 'sh' | 'nb' | '?';
 
 export type HabitatId = 'wald' | 'wiese' | 'moor' | 'heide' | 'kueste' | 'gewaesser' | 'gebirge' | 'acker' | 'stadt';
 
@@ -75,6 +75,10 @@ export interface Species {
   synonyms?: string[];
   /** Added at runtime from an identification, not part of the built-in list. */
   dynamic?: boolean;
+  /** true when rl/bestand come from the official Rote Liste (Metzing et al. 2018). */
+  rlOfficial?: boolean;
+  /** Endemit Deutschlands laut Roter Liste. */
+  endemic?: boolean;
 }
 
 export type FindStatus = 'pending' | 'ready' | 'confirmed' | 'failed';

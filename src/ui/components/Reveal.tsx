@@ -36,6 +36,7 @@ export function Reveal() {
           <div className="row">
             <span className="tag">{TYPE_NAMES[sp.type]}</span>
             <span className="tag">Rote Liste: {RL_TEXT[sp.rl]}</span>
+            {sp.endemic && <span className="tag good">Nur in Deutschland</span>}
           </div>
           <p>{sp.description}</p>
           <p className="muted">

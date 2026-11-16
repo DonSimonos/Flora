@@ -226,3 +226,60 @@ describe('Speichern', () => {
     expect(parse(JSON.stringify({ version: 999, state: s }))).toBeNull();
   });
 });
+
+describe('Rote Liste (Metzing et al. 2018)', () => {
+  it('liefert offizielle Werte für eingebaute Arten', async () => {
+    const { SPECIES } = await import('../data/species');
+    const by = (id: string) => SPECIES.find((s) => s.id === id)!;
+    expect(by('sonnentau')).toMatchObject({ rl: '3', rlOfficial: true });
+    expect(by('wasserschlauch')).toMatchObject({ rl: '3', bestand: 'mh' });
+    expect(by('edelweiss').rlOfficial).toBe(true); // über Synonym Leontopodium alpinum
+    expect(by('wasserfenchel')).toMatchObject({ rl: '1', endemic: true });
+    expect(SPECIES.every((s) => s.rlOfficial)).toBe(true);
+  });
+
+  it('findet Namen mit Autor, Artengruppen und gibt unbekannten Namen nichts', async () => {
+    const { lookupRedList, searchRedList } = await import('./redlist');
+    expect(lookupRedList('Utricularia minor L.')?.de).toBe('Kleiner Wasserschlauch');
+    expect(lookupRedList('Utricularia vulgaris')?.rl).toBe('3'); // Art schlägt Artengruppe
+    expect(lookupRedList('Utricularia vulgaris agg.')?.rl).toBe('V');
+    expect(lookupRedList('Phantasia inventa')).toBeNull();
+    expect(searchRedList('wassersch').some((e) => e.name === 'Utricularia minor')).toBe(true);
+  });
+
+  it('neue Arten außerhalb der Liste bekommen die offizielle Seltenheit', () => {
+    let s = game.addFind(game.newGame(), find('f1'));
+    s = game.confirmFind(s, 'f1', { sci: 'Utricularia minor', de: null, family: null, score: null, verified: false });
+    const sp = speciesById(s, s.discovered[0]);
+    expect(sp).toMatchObject({ de: 'Kleiner Wasserschlauch', rl: '3', rlOfficial: true });
+    expect(rarityOf(sp)).toBe('episch');
+  });
+});
+
+describe('Schutz der Fundorte', () => {
+  it('TK25-Feld für Kategorie 1 und extrem seltene Arten', async () => {
+    const { publicLocation, precisionFor, tk25 } = await import('./privacy');
+    expect(tk25(52.374, 9.738).number).toBe('3624'); // Hannover
+    expect(precisionFor({ rl: '1', bestand: 'ss' })).toBe('tk25');
+    expect(precisionFor({ rl: '*', bestand: 'es' })).toBe('tk25');
+    expect(precisionFor({ rl: '3', bestand: 'mh' })).toBe('ca300m');
+    expect(precisionFor({ rl: 'V', bestand: 'mh' })).toBe('genau');
+    const p = publicLocation(52.374, 9.738, { rl: '1', bestand: 'es' });
+    expect(p.tk25).toBe('3624');
+    // the cell centre, not the real place
+    expect(Math.abs(p.lat - 52.374) + Math.abs(p.lng - 9.738)).toBeGreaterThan(0.01);
+  });
+
+  it('300-m-Vergröberung bleibt innerhalb von 300 m und ist stabil', async () => {
+    const { coarse300 } = await import('./privacy');
+    const dist = (a: number, b: number, c: number, d: number) =>
+      Math.hypot((a - c) * 111_320, (b - d) * 111_320 * Math.cos((a * Math.PI) / 180));
+    for (let i = 0; i < 200; i++) {
+      const lat = 47.5 + (i * 0.0377) % 7.5;
+      const lng = 6 + (i * 0.0613) % 9;
+      const c = coarse300(lat, lng);
+      expect(dist(lat, lng, c.lat, c.lng)).toBeLessThanOrEqual(300);
+      expect(coarse300(lat, lng)).toEqual(c); // same place, same shown point
+    }
+  });
+});

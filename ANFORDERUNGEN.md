@@ -22,7 +22,7 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
 - Lebensräume (statt Fantasie-Biome): z. B. Wald, Moor, Heide, Küste, Alpen, Magerrasen,
   Gewässer, Stadt.
 
-### Seltenheit (aus Roter Liste Deutschland + Verbreitung)
+### Seltenheit (aus Roter Liste Deutschland + aktueller Bestandssituation)
 | Stufe | Bedeutung |
 |---|---|
 | Gewöhnlich | weit verbreitet, ungefährdet |
@@ -47,8 +47,8 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
 ## Später (nicht in Version 1)
 - Wettbewerbe: Werte-Wettbewerbe gegen den Computer + Natur-Challenges draußen.
 - Spielerlevel, Erfahrungspunkte, Tagesaufgaben, Missionen, Erfolge/Abzeichen, Profil.
-- Mitspieler (Anmeldung, Server, Rangliste). Dann sehen alle die Fundorte;
-  Rote-Liste-Arten mit 300 m Unschärfe.
+- Mitspieler (Anmeldung, Server, Rangliste). Dann sehen alle die Fundorte, aber geschützt
+  (siehe „Daten und Fundortschutz“).
 
 ## Technik
 - React + TypeScript + Vite, PWA. Spielmechanik, Daten und Oberfläche getrennt.
@@ -57,6 +57,15 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
 - Erweiterbar: neue Arten, Lebensräume, Fähigkeiten ohne Umbau.
 - Eigenes Repository `flora` (getrennt von der PflanzenKarte), Veröffentlichung über GitHub Pages.
 
+## Daten und Fundortschutz
+- Rote Liste: Metzing et al. (2018), Rote-Liste-Zentrum. Lizenz CC BY-ND 4.0 (Namensnennung –
+  keine Bearbeitung), Nutzung für FLORA bestätigt per Mail vom 16.11.2026. Werte unverändert
+  übernehmen, Quelle in der App sichtbar nennen (Herbarium, „Quellen & Lizenzen“).
+- Die ganze Gesamtartenliste (4.382 Arten und Artengruppen) ist in der App: Auswahl im Testmodus
+  und automatische Seltenheit für jede erkannte Art.
+- Fundorte für andere (ab der Stufe mit Mitspielern), auf Empfehlung des Rote-Liste-Zentrums:
+  Kategorie 1 und 0 sowie Bestand „extrem selten“ nur als TK25-Rasterfeld (ca. 11 × 11 km);
+  Kategorien 2, 3, G, R auf etwa 300 m vergröbert; sonst genau. Eigene Funde sieht man immer genau.
+
 ## Offene Punkte
 1. Pl@ntNet-Schlüssel als GitHub-Secret `PLANTNET_KEY` hinterlegen (Konto ist angelegt, Domain freigegeben).
-2. Antwort des Rote-Liste-Zentrums abwarten (Anfrage verschickt am 2026-11-15), dann echte Daten einbauen.

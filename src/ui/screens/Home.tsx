@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { PlantArt } from '../../art/PlantArt';
 import { SPECIES } from '../../data/species';
 import { RARITIES } from '../../game/config';
@@ -8,9 +9,11 @@ import { rarityOf } from '../../game/rarity';
 import { useGame, useNow } from '../../store/store';
 import { SpeciesCard } from '../components/common';
 import type { Tab } from '../App';
+import { SourcesSheet } from '../components/Sources';
 
 export function Home({ go }: { go: (t: Tab) => void }) {
   const state = useGame();
+  const [sources, setSources] = useState(false);
   const now = useNow();
   const climate = climateAt(now);
   const builtIn = SPECIES.length;
@@ -124,6 +127,8 @@ export function Home({ go }: { go: (t: Tab) => void }) {
       <p className="notice">
         <b>Naturschutz zuerst:</b> Gesammelt wird nur per Foto. Nichts pflücken oder ausgraben, in Schutzgebieten auf den Wegen bleiben.
       </p>
+      <button className="link small" onClick={() => setSources(true)}>Quellen & Lizenzen</button>
+      {sources && <SourcesSheet onClose={() => setSources(false)} />}
     </div>
   );
 }

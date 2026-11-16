@@ -8,6 +8,9 @@ import { speciesById } from '../../game/catalog';
 import { BESTAND_TEXT, rarityOf, RL_TEXT } from '../../game/rarity';
 import type { HabitatId, RarityId, Species } from '../../game/types';
 import { useGame } from '../../store/store';
+import { precisionFor, precisionText, publicLocation } from '../../game/privacy';
+import { REDLIST_LICENSE } from '../../game/redlist';
+import { SourcesSheet } from '../components/Sources';
 import { dateText, Photo, RarityBadge, Sheet, SpeciesCard, TYPE_NAMES } from '../components/common';
 
 const NEED = ['', 'wenig', 'mittel', 'viel'];
@@ -19,6 +22,7 @@ export function Herbarium({ focus, onFocusDone }: { focus?: string | null; onFoc
   const [rarity, setRarity] = useState<RarityId | 'alle'>('alle');
   const [onlyFound, setOnlyFound] = useState(false);
   const [open, setOpen] = useState<string | null>(focus ?? null);
+  const [sources, setSources] = useState(false);
   const found = new Set(state.discovered);
 
   const list = SPECIES.filter(
@@ -94,8 +98,10 @@ export function Herbarium({ focus, onFocusDone }: { focus?: string | null; onFoc
       )}
 
       <p className="muted tiny">
-        Rote-Liste-Angaben sind vorläufige Testdaten und werden durch die offiziellen Daten (Metzing et al. 2018, Rote-Liste-Zentrum) ersetzt.
+        Gefährdung nach Metzing et al. (2018), Rote Liste der Farn- und Blütenpflanzen Deutschlands, Rote-Liste-Zentrum, {REDLIST_LICENSE}.{' '}
+        <button className="link tiny" onClick={() => setSources(true)}>Quellen</button>
       </p>
+      {sources && <SourcesSheet onClose={() => setSources(false)} />}
 
       {open && (
         <SpeciesSheet
@@ -146,8 +152,10 @@ function SpeciesSheet({ species: s, onClose }: { species: Species; onClose: () =
             <dt>Familie</dt><dd>{s.family}</dd>
             <dt>Lebensraum</dt><dd>{habitatNames || '–'}</dd>
             <dt>Typ</dt><dd>{TYPE_NAMES[s.type]}</dd>
-            <dt>Rote Liste D</dt><dd>{RL_TEXT[s.rl]}{s.rl !== '?' ? ' (vorläufig)' : ''}</dd>
+            <dt>Rote Liste D</dt><dd>{s.rl !== '?' && s.rl !== 'nb' ? `${s.rl} – ` : ''}{RL_TEXT[s.rl]}{s.rlOfficial ? '' : ' (keine offiziellen Daten)'}</dd>
             <dt>Bestand</dt><dd>{BESTAND_TEXT[s.bestand]}</dd>
+            {s.endemic && <><dt>Besonders</dt><dd>Endemit – kommt weltweit nur in Deutschland vor</dd></>}
+            <dt>Quelle</dt><dd className="tiny muted">Rote Liste: Metzing et al. (2018), {REDLIST_LICENSE}</dd>
             <dt>Braucht</dt><dd>Wasser {NEED[s.needs.water]} · {LIGHT[s.needs.light]} · Nährstoffe {NEED[s.needs.nutrients]}</dd>
           </dl>
         </section>
@@ -198,6 +206,9 @@ function SpeciesSheet({ species: s, onClose }: { species: Species; onClose: () =
                 <div className="muted small">
                   {f.lat != null ? `${f.lat.toFixed(4)}, ${f.lng!.toFixed(4)}` : 'ohne Standort'}
                 </div>
+                {f.lat != null && precisionFor(s) !== 'genau' && (
+                  <div className="tiny muted">🔒 {precisionText(publicLocation(f.lat, f.lng!, s))}</div>
+                )}
               </div>
               {f.verified ? <span className="tag good">erkannt</span> : <span className="tag warn">{f.score == null ? 'selbst bestimmt' : 'unsicher'}</span>}
             </div>

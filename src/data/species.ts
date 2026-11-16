@@ -1,7 +1,8 @@
 // Eingebaute Artenliste.
-// ACHTUNG: Rote-Liste-Kategorie (rl) und Bestand sind VORLÄUFIGE TESTDATEN nach bestem Wissen.
-// Sie werden durch die offiziellen Daten (Metzing et al. 2018, Rote-Liste-Zentrum) ersetzt,
-// sobald die Nutzung geklärt ist. Neue Arten: einfach weitere sp(...)-Einträge anhängen.
+// Rote-Liste-Kategorie und Bestand werden beim Start aus der offiziellen Roten Liste
+// (Metzing et al. 2018, src/data/rote-liste-2018.json) übernommen; die Werte in sp(...) sind nur
+// Rückfall, falls eine Art dort nicht steht. Neue Arten: weitere sp(...)-Einträge anhängen.
+import { lookupRedList } from '../game/redlist';
 import type {
   Bestand, EvolutionForm, FormEffect, FormTrigger, HabitatId, Needs, PlantType, RedListCat, Species, StatId,
 } from '../game/types';
@@ -114,7 +115,7 @@ function sp(i: SpecInput): Species {
   };
 }
 
-export const SPECIES: Species[] = [
+const RAW_SPECIES: Species[] = [
   // ---------- Besondere Arten mit eigener Zeichnung ----------
   sp({
     id: 'loewenzahn', sci: 'Taraxacum sect. Ruderalia', de: 'Löwenzahn', family: 'Korbblütler', habitats: ['stadt', 'wiese'], type: 'kraut', rl: '*', bestand: 'sh', color: '#f5c518', art: true,
@@ -364,7 +365,7 @@ export const SPECIES: Species[] = [
     ],
   }),
   sp({
-    id: 'boehmischer_enzian', sci: 'Gentianella bohemica', de: 'Böhmischer Enzian', family: 'Enziangewächse', habitats: ['wiese', 'gebirge'], type: 'kraut', rl: '1', bestand: 'es', color: '#8b4fc4', art: true,
+    id: 'boehmischer_enzian', sci: 'Gentianella bohemica', synonyms: ['Gentianella praecox', 'Gentianella praecox subsp. bohemica'], de: 'Böhmischer Enzian', family: 'Enziangewächse', habitats: ['wiese', 'gebirge'], type: 'kraut', rl: '1', bestand: 'es', color: '#8b4fc4', art: true,
     description: 'Wächst nur in Mitteleuropa und ist in Deutschland fast verschwunden. Die Pflanze lebt zwei Jahre, blüht einmal und stirbt dann.',
     needs: { nutrients: 1 }, abilities: ['gipfelstuermer', 'frostschutz', 'bluetenmagnet'],
     forms: [
@@ -435,3 +436,9 @@ export const SPECIES: Species[] = [
   sp({ id: 'knabenkraut', sci: 'Dactylorhiza majalis', de: 'Breitblättriges Knabenkraut', family: 'Orchideen', habitats: ['wiese', 'moor'], type: 'orchidee', rl: '3', bestand: 's', color: '#c04fa0', needs: { water: 3, nutrients: 1 }, description: 'Orchidee der Feuchtwiesen mit gefleckten Blättern. Verschwindet, wenn Wiesen entwässert werden.' }),
   sp({ id: 'bienenragwurz', sci: 'Ophrys apifera', de: 'Bienen-Ragwurz', family: 'Orchideen', habitats: ['wiese'], type: 'orchidee', rl: '*', bestand: 's', color: '#c78fb0', needs: { nutrients: 1 }, description: 'Ahmt eine Biene nach, bestäubt sich in Mitteleuropa aber meistens selbst.' }),
 ];
+
+/** Built-in species with official Rote-Liste data (falls back to the values above if not listed). */
+export const SPECIES: Species[] = RAW_SPECIES.map((s) => {
+  const e = [s.sci, ...(s.synonyms ?? [])].map(lookupRedList).find(Boolean);
+  return e ? { ...s, rl: e.rl, bestand: e.bestand, rlOfficial: true, endemic: e.endemic } : s;
+});

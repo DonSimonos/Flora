@@ -1,4 +1,5 @@
 import { SPECIES } from '../data/species';
+import { lookupRedList } from './redlist';
 import type { GameState, Species } from './types';
 
 /** Normalise a scientific name to "genus species" for matching. */
@@ -58,17 +59,22 @@ export function slug(s: string): string {
  */
 export function makeDynamicSpecies(sci: string, de: string | null, family: string | null): Species {
   const base = SPECIES.find((s) => s.id === 'spitzwegerich')!; // neutral template
-  const cleanSci = sci.trim() ? normSci(sci).replace(/^./, (c) => c.toUpperCase()) : '';
+  const rl = lookupRedList(sci);
+  const cleanSci = rl?.name ?? (sci.trim() ? normSci(sci).replace(/^./, (c) => c.toUpperCase()) : '');
   return {
     ...base,
     id: 'x_' + slug(cleanSci || (de ?? 'unbekannt')),
     sci: cleanSci || 'wissenschaftlicher Name unbekannt',
-    de: de?.trim() || cleanSci,
+    de: de?.trim() || rl?.de || cleanSci,
     family: family ?? 'unbekannt',
     habitats: [],
-    rl: '?',
-    bestand: '?',
-    description: 'Diese Art steht noch nicht in der FLORA-Artenliste. Gefährdung und Seltenheit werden ergänzt, sobald die offiziellen Daten eingebunden sind.',
+    rl: rl?.rl ?? '?',
+    bestand: rl?.bestand ?? '?',
+    rlOfficial: Boolean(rl),
+    endemic: rl?.endemic ?? false,
+    description: rl
+      ? 'Diese Art hat in FLORA noch keine eigene Zeichnung und Geschichte. Gefährdung und Seltenheit stammen aus der Roten Liste Deutschlands.'
+      : 'Diese Art steht nicht in der Roten Liste Deutschlands. Prüfe den Namen – vielleicht ist es eine Gartenpflanze oder ein Tippfehler.',
     color: '#9fb39a',
     art: undefined,
     synonyms: undefined,

@@ -48,6 +48,7 @@ export const RL_TEXT: Record<RedListCat, string> = {
   V: 'Vorwarnliste',
   D: 'Daten unzureichend',
   '*': 'Ungefährdet',
+  nb: 'Nicht bewertet (z. B. eingebürgert)',
   '?': 'Noch keine Daten',
 };
 
@@ -59,5 +60,6 @@ export const BESTAND_TEXT: Record<Bestand, string> = {
   mh: 'mäßig häufig',
   h: 'häufig',
   sh: 'sehr häufig',
+  nb: 'nicht bewertet',
   '?': 'unbekannt',
 };
