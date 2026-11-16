@@ -57,7 +57,6 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
 - Erweiterbar: neue Arten, Lebensräume, Fähigkeiten ohne Umbau.
 - Eigenes Repository `flora` (getrennt von der PflanzenKarte), Veröffentlichung über GitHub Pages.
 
-## Offene Punkte vor dem Programmieren
-1. Repository `flora` anlegen, Claude-App dafür installieren.
-2. Pl@ntNet-Zugang anlegen (my.plantnet.org); Schlüssel auf die Pages-Adresse beschränken.
-3. Quellen und Nutzungsrechte für Artenliste und Rote Liste Deutschland prüfen.
+## Offene Punkte
+1. Pl@ntNet-Schlüssel als GitHub-Secret `PLANTNET_KEY` hinterlegen (Konto ist angelegt, Domain freigegeben).
+2. Antwort des Rote-Liste-Zentrums abwarten (Anfrage verschickt am 2026-11-15), dann echte Daten einbauen.
