@@ -51,7 +51,7 @@ export function withCandidates(raw: Omit<Candidate, 'speciesId'>[]): Candidate[]
 
 export type Choice =
   | { speciesId: string; score: number | null; verified: boolean }
-  | { sci: string; de: string | null; family: string | null; score: number; verified: boolean };
+  | { sci: string; de: string | null; family: string | null; score: number | null; verified: boolean };
 
 /**
  * Confirms which species a find shows. Grants the rewards and queues the discovery reveal.
@@ -65,7 +65,7 @@ export function confirmFind(state: GameState, findId: string, choice: Choice): G
   if ('speciesId' in choice) {
     speciesId = choice.speciesId;
   } else {
-    const known = matchSpecies(choice.sci);
+    const known = choice.sci.trim() ? matchSpecies(choice.sci) : null;
     if (known) speciesId = known.id;
     else {
       const dyn = makeDynamicSpecies(choice.sci, choice.de, choice.family);

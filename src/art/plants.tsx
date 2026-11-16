@@ -740,7 +740,50 @@ function BodenseeVergissmeinnicht() {
   );
 }
 
+function Wasserschlauch() {
+  const shoot = (x: number, y: number, r: number, len: number) => (
+    <g transform={`translate(${x} ${y}) rotate(${r})`}>
+      <line x1={0} y1={0} x2={0} y2={-len} stroke="#6f9a4a" strokeWidth={1.4} />
+      {range(Math.floor(len / 8)).map((i) => (
+        <g key={i} transform={`translate(0 ${-6 - i * 8})`}>
+          {[-1, 1].map((d) => (
+            <g key={d}>
+              <path d={`M0,0 q${d * 6},-3 ${d * 11},-1 M${d * 5},-2 q${d * 3},-5 ${d * 6},-7 M${d * 7},-1 q${d * 4},3 ${d * 8},4`} stroke="#5f9a4a" strokeWidth={1} fill="none" />
+              <circle cx={d * 11} cy={-1} r={1.8} fill="#cfe0a0" stroke="#6f8a3a" strokeWidth={0.5} />
+            </g>
+          ))}
+        </g>
+      ))}
+    </g>
+  );
+  const flower = (x: number, y: number, s: number) => (
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      <path d="M-9,0 C-11,-12 11,-12 9,0 C6,4 -6,4 -9,0Z" fill="#f2c41a" stroke="#b38a00" strokeWidth={0.8} />
+      <path d="M-12,2 C-14,14 14,14 12,2 C6,6 -6,6 -12,2Z" fill="#f7d23a" stroke="#b38a00" strokeWidth={0.8} />
+      <path d="M-5,4 Q0,8 5,4" stroke="#d6700a" strokeWidth={1.6} fill="none" />
+      <path d="M8,8 Q14,14 10,18" stroke="#e0b020" strokeWidth={2} fill="none" strokeLinecap="round" />
+    </g>
+  );
+  return (
+    <>
+      <rect x={0} y={150} width={200} height={90} fill="#2f6f86" opacity={0.55} />
+      <path d="M0,150 q25,-5 50,0 t50,0 t50,0 t50,0" stroke="#d8f1fa" strokeWidth={1.4} fill="none" opacity={0.8} />
+      {shoot(100, 228, -70, 72)}
+      {shoot(100, 228, 70, 72)}
+      {shoot(100, 228, -35, 64)}
+      {shoot(100, 228, 35, 64)}
+      {shoot(100, 228, 0, 56)}
+      <Stem d="M100,170 C100,140 98,110 100,64" w={2.2} c="#7a6a3a" />
+      {flower(100, 66, 1.05)}
+      {flower(92, 90, 0.9)}
+      {flower(108, 112, 0.85)}
+      {flower(94, 132, 0.75)}
+    </>
+  );
+}
+
 export const PLANT_ART: Record<string, () => ReactNode> = {
+  wasserschlauch: Wasserschlauch,
   loewenzahn: Loewenzahn,
   gaensebluemchen: Gaensebluemchen,
   klatschmohn: Klatschmohn,

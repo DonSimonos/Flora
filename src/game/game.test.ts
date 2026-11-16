@@ -113,6 +113,18 @@ describe('Entdecken', () => {
     expect(speciesById(s, 'x_quercus_robur').de).toBe('Stiel-Eiche');
   });
 
+  it('selbst eingetragene Arten zählen, auch ohne wissenschaftlichen Namen', () => {
+    let s = game.addFind(game.newGame(), find('f1'));
+    s = game.confirmFind(s, 'f1', { sci: '', de: 'Kleiner Wasserschlauch', family: null, score: null, verified: false });
+    expect(s.discovered).toEqual(['x_kleiner_wasserschlauch']);
+    expect(s.finds[0]).toMatchObject({ verified: false, score: null });
+    // ein eingetippter Name der Liste wird der eingebauten Art zugeordnet
+    s = game.addFind(s, find('f2'));
+    s = game.confirmFind(s, 'f2', { sci: 'Utricularia vulgaris', de: 'Wasserschlauch', family: null, score: null, verified: false });
+    expect(s.discovered).toContain('wasserschlauch');
+    expect(s.extraSpecies).toHaveLength(1);
+  });
+
   it('Kandidaten werden gefiltert und abgeglichen', () => {
     const c = game.withCandidates([
       { sci: 'Drosera rotundifolia', de: null, family: null, score: 0.7 },
