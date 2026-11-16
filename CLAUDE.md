@@ -11,6 +11,8 @@ dort Änderungen am Konzept festhalten (alten Text ersetzen, nicht stapeln).
   Pull Request; DonSimonos sieht ihn sich an und bestätigt das Zusammenführen.
   Vorher müssen `npm test` und `npm run build` fehlerfrei laufen.
 - Pl@ntNet-Schlüssel nur als GitHub-Secret `PLANTNET_KEY` bzw. lokal in `.env.local`, nie im Code.
+  Bei Pl@ntNet sind „expose my API key“ und die Domain `https://donsimonos.github.io` (mit `https://`)
+  freigegeben. Fehler 401 = Schlüssel falsch, Fehler 403 = Domain nicht freigegeben.
 
 ## Aufbau
 - `src/game/` Spielregeln als reine Funktionen (keine React-Abhängigkeit), Tests in `game.test.ts`.
