@@ -151,6 +151,10 @@ function IdentifySheet({ findId, onClose }: { findId: string; onClose: () => voi
     update((s) => confirmFind(s, findId, { speciesId, score: null, verified: false }));
   }
 
+  function chooseOwn(de: string, sci: string) {
+    update((s) => confirmFind(s, findId, { sci, de, family: null, score: null, verified: false }));
+  }
+
   async function discard() {
     const f = getState().finds.find((x) => x.id === findId);
     update((s) => deleteFind(s, findId));
@@ -204,7 +208,7 @@ function IdentifySheet({ findId, onClose }: { findId: string; onClose: () => voi
           </>
         )}
         {showManual ? (
-          <SpeciesPicker onPick={chooseManual} />
+          <SpeciesPicker onPick={chooseManual} onOwn={chooseOwn} />
         ) : (
           <button className="btn ghost" onClick={() => setManual(true)}>Keine passt – Art selbst wählen</button>
         )}
@@ -214,8 +218,11 @@ function IdentifySheet({ findId, onClose }: { findId: string; onClose: () => voi
   );
 }
 
-function SpeciesPicker({ onPick }: { onPick: (id: string) => void }) {
+function SpeciesPicker({ onPick, onOwn }: { onPick: (id: string) => void; onOwn: (de: string, sci: string) => void }) {
   const [q, setQ] = useState('');
+  const [own, setOwn] = useState(false);
+  const [de, setDe] = useState('');
+  const [sci, setSci] = useState('');
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
     return SPECIES.filter((s) => !n || s.de.toLowerCase().includes(n) || s.sci.toLowerCase().includes(n)).slice(0, 40);
@@ -234,6 +241,19 @@ function SpeciesPicker({ onPick }: { onPick: (id: string) => void }) {
         </button>
       ))}
       {list.length === 0 && <p className="muted">Keine Art gefunden.</p>}
+      {!own ? (
+        <button className="btn ghost" onClick={() => { setOwn(true); setDe(q.trim()); }}>
+          Art nicht in der Liste? Selbst eintragen
+        </button>
+      ) : (
+        <div className="panel stack">
+          <b>Eigene Art eintragen</b>
+          <input className="search" placeholder="Deutscher Name, z. B. Kleiner Wasserschlauch" value={de} onChange={(e) => setDe(e.target.value)} />
+          <input className="search" placeholder="Wissenschaftlicher Name (freiwillig)" value={sci} onChange={(e) => setSci(e.target.value)} autoCapitalize="sentences" />
+          <p className="muted tiny">Die Art kommt unter „Weitere entdeckte Arten“ ins Herbarium. Ihre Seltenheit wird ergänzt, sobald die offiziellen Rote-Liste-Daten eingebunden sind.</p>
+          <button className="btn primary" disabled={!de.trim() && !sci.trim()} onClick={() => onOwn(de.trim(), sci.trim())}>Eintragen</button>
+        </div>
+      )}
     </div>
   );
 }

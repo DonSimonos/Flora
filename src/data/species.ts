@@ -381,6 +381,15 @@ export const SPECIES: Species[] = [
       form('uferstern', 'Uferstern', 'Durch Wachstumstraining zu einem dichten Polster geworden.', train('wachstum', 20), 'bluete', { wachstum: 1.3 }),
     ],
   }),
+  sp({
+    id: 'wasserschlauch', sci: 'Utricularia vulgaris', de: 'Gewöhnlicher Wasserschlauch', family: 'Wasserschlauchgewächse', habitats: ['gewaesser', 'moor'], type: 'karnivore', rl: '3', bestand: 's', color: '#f2c41a', art: true,
+    description: 'Hat keine Wurzeln und schwebt frei im Wasser. Winzige Fangblasen saugen in einer Hundertstelsekunde Wasserflöhe ein – eine der schnellsten Bewegungen im Pflanzenreich.',
+    needs: { water: 3, light: 3, nutrients: 1 }, abilities: ['fallensteller', 'schwimmblatt', 'sonnenanbeter'],
+    forms: [
+      form('blitzfalle', 'Blitzfalle', 'Durch Anpassungstraining fangen die Blasen noch schneller.', train('anpassung', 20), 'tau', { anpassung: 1.3 }),
+      form('goldspiegel', 'Goldspiegel', 'In der Sonne trainiert, die Blüten leuchten über dem Wasser.', cond('sonne', 8), 'sonne', { energie: 1.25 }),
+    ],
+  }),
 
   // ---------- Weitere Arten (Zeichnung nach Pflanzentyp) ----------
   sp({ id: 'brennnessel', sci: 'Urtica dioica', de: 'Große Brennnessel', family: 'Brennnesselgewächse', habitats: ['wald', 'stadt'], type: 'kraut', rl: '*', bestand: 'sh', color: '#6d8a3a', needs: { nutrients: 3 }, description: 'Brennhaare wie winzige Glasnadeln. Futterpflanze für Raupen von Tagpfauenauge und Kleinem Fuchs.' }),

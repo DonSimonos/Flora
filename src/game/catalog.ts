@@ -58,11 +58,12 @@ export function slug(s: string): string {
  */
 export function makeDynamicSpecies(sci: string, de: string | null, family: string | null): Species {
   const base = SPECIES.find((s) => s.id === 'spitzwegerich')!; // neutral template
+  const cleanSci = sci.trim() ? normSci(sci).replace(/^./, (c) => c.toUpperCase()) : '';
   return {
     ...base,
-    id: 'x_' + slug(normSci(sci)),
-    sci: normSci(sci).replace(/^./, (c) => c.toUpperCase()),
-    de: de ?? sci,
+    id: 'x_' + slug(cleanSci || (de ?? 'unbekannt')),
+    sci: cleanSci || 'wissenschaftlicher Name unbekannt',
+    de: de?.trim() || cleanSci,
     family: family ?? 'unbekannt',
     habitats: [],
     rl: '?',
