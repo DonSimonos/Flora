@@ -3,6 +3,7 @@ import { PlantArt } from '../../art/PlantArt';
 import { abilityInfo } from '../../data/abilities';
 import { BALANCE, CONDITION_NAMES, STAT_NAMES } from '../../game/config';
 import { activeConditions, climateAt, weatherView } from '../../game/climate';
+import { bestLamp, nutrientBand, reactionBand, reactionWord, temperatureWord, waterBand } from '../../game/ecology';
 import { speciesById } from '../../game/catalog';
 import { careAction, evolveAction, lightAction, plantSeed, trainAction, zoneAction } from '../../game/game';
 import {
@@ -145,8 +146,12 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
   const conds = activeConditions(climate, p.zone);
   const trainBlock = canTrain(p);
   const evolvable = availableForms(p, sp);
-  const wBand = BALANCE.waterBand[sp.needs.water];
-  const nBand = BALANCE.nutrientBand[sp.needs.nutrients];
+  const wBand = waterBand(sp.eco);
+  const nBand = nutrientBand(sp.eco);
+  const rBand = reactionBand(sp.eco);
+  const lamp = bestLamp(sp.eco);
+  const coolZone = sp.eco.T < BALANCE.eco.temperature.warmOkAbove;
+  const warmOnly = sp.eco.T > BALANCE.eco.temperature.coolOkBelow;
 
   function doCare(a: CareId) {
     let res: ReturnType<typeof careAction>['result'] | undefined;
@@ -235,7 +240,8 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
           <h2>Pflege</h2>
           <Meter label="Wasser" value={p.water} band={wBand} />
           <Meter label="Nährstoffe" value={p.nutrients} band={nBand} />
-          <Meter label="Boden" value={p.soil} />
+          <Meter label="Bodenreaktion" value={p.reaction} max={10} band={[rBand[0] * 10, rBand[1] * 10]} display={reactionWord(p.reaction)} />
+          <Meter label="Bodenqualität" value={p.soil} />
           <Meter label="Gesundheit" value={p.health} />
           <Meter label="Wildwuchs" value={p.overgrowth} />
           <p className="tiny muted">Die hellen Bereiche zeigen, was diese Art mag.</p>
@@ -244,10 +250,12 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
             <button className="btn" onClick={() => doCare('duengen')} disabled={state.items.duenger <= 0}>🧪 Düngen<small>{state.items.duenger} übrig</small></button>
             <button className="btn" onClick={() => doCare('boden')} disabled={soilWait > 0}>🪱 Boden lockern{soilWait > 0 && <small>in {hoursText(soilWait)}</small>}</button>
             <button className="btn" onClick={() => doCare('schnitt')} disabled={pruneWait > 0}>✂️ Schneiden{pruneWait > 0 && <small>in {hoursText(pruneWait)}</small>}</button>
+            <button className="btn" onClick={() => doCare('kalken')}>🪨 Kalk streuen<small>Boden kalkiger</small></button>
+            <button className="btn" onClick={() => doCare('ansaeuern')}>🍂 Laubhumus geben<small>Boden saurer</small></button>
             {p.disease && <button className="btn" onClick={() => doCare('behandeln')} disabled={state.items.heilmittel <= 0}>💊 {DISEASE_NAMES[p.disease]} behandeln<small>{state.items.heilmittel} übrig</small></button>}
           </div>
           <div>
-            <div className="small" style={{ marginBottom: 6 }}>Licht – diese Art mag <b>{LIGHT_NAMES[sp.needs.light]}</b></div>
+            <div className="small" style={{ marginBottom: 6 }}>Licht – diese Art mag am liebsten <b>{LIGHT_NAMES[lamp]}</b> <span className="muted">(Zeigerwert {sp.eco.L.toLocaleString('de-DE')})</span></div>
             <div className="seg">
               {([1, 2, 3] as Level3[]).map((l) => (
                 <button key={l} aria-pressed={p.light === l} onClick={() => update((s) => lightAction(s, plantId, l))}>{LIGHT_NAMES[l]}</button>
@@ -255,7 +263,10 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
             </div>
           </div>
           <div>
-            <div className="small" style={{ marginBottom: 6 }}>Standort im Gewächshaus</div>
+            <div className="small" style={{ marginBottom: 6 }}>
+              Standort – diese Art mag es <b>{temperatureWord(sp.eco.T)}</b>
+              {coolZone ? ': am besten Höhenkammer' : warmOnly ? ': nicht in die Höhenkammer' : ''}
+            </div>
             <div className="seg two">
               <button aria-pressed={p.zone === 'tal'} onClick={() => update((s) => zoneAction(s, plantId, 'tal'))}>Tieflandbeet</button>
               <button aria-pressed={p.zone === 'hoehe'} onClick={() => update((s) => zoneAction(s, plantId, 'hoehe'))}>Höhenkammer</button>
@@ -334,6 +345,8 @@ const CARE_DONE: Record<CareId, string> = {
   boden: '🪱 Boden gelockert',
   schnitt: '✂️ Geschnitten',
   behandeln: '💊 Behandelt',
+  kalken: '🪨 Kalk gestreut',
+  ansaeuern: '🍂 Laubhumus gegeben',
 };
 
 function stageName(s: ReturnType<typeof stageOf>): string {

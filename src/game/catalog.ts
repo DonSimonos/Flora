@@ -1,5 +1,6 @@
 import { SPECIES } from '../data/species';
-import { lookupRedList } from './redlist';
+import { artInfo } from './artendb';
+import { ecoFromLevels } from './ecology';
 import type { GameState, Species } from './types';
 
 /** Normalise a scientific name to "genus species" for matching. */
@@ -59,10 +60,13 @@ export function slug(s: string): string {
  */
 export function makeDynamicSpecies(sci: string, de: string | null, family: string | null): Species {
   const base = SPECIES.find((s) => s.id === 'spitzwegerich')!; // neutral template
-  const rl = lookupRedList(sci);
+  const info = sci.trim() ? artInfo(sci) : null;
+  const rl = info?.redList ?? null;
   const cleanSci = rl?.name ?? (sci.trim() ? normSci(sci).replace(/^./, (c) => c.toUpperCase()) : '');
   return {
     ...base,
+    eco: ecoFromLevels(2, 2, 2),
+    ecoSource: 'schaetzung',
     id: 'x_' + slug(cleanSci || (de ?? 'unbekannt')),
     sci: cleanSci || 'wissenschaftlicher Name unbekannt',
     de: de?.trim() || rl?.de || cleanSci,
@@ -71,6 +75,8 @@ export function makeDynamicSpecies(sci: string, de: string | null, family: strin
     rl: rl?.rl ?? '?',
     bestand: rl?.bestand ?? '?',
     rlOfficial: Boolean(rl),
+    ...(info?.eco ? { eco: info.eco, ecoSource: 'eive' as const } : {}),
+    ellenberg: info?.ellenberg ?? undefined,
     endemic: rl?.endemic ?? false,
     description: rl
       ? 'Diese Art hat in FLORA noch keine eigene Zeichnung und Geschichte. Gefährdung und Seltenheit stammen aus der Roten Liste Deutschlands.'

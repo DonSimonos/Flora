@@ -32,5 +32,8 @@ dort Änderungen am Konzept festhalten (alten Text ersetzen, nicht stapeln).
 - Rote Liste: offizielle Daten (Metzing et al. 2018) in `src/data/rote-liste-2018.json`, erzeugt mit
   `tools/import_rote_liste.py`. Lizenz CC BY-ND 4.0: Werte nie ändern, Quelle immer sichtbar nennen
   (`src/game/redlist.ts` hat Zitat und Lizenz). Eingebaute Arten holen sich Kategorie/Bestand von dort.
+- Artendatenbank `src/game/artendb.ts`: Rote Liste + EIVE-Zeigerwerte (`src/data/eive-1.0.json`,
+  erzeugt mit `tools/import_eive.py`, CC BY 4.0) + Ellenberg Deutschland. Nur offene Datenquellen
+  verwenden. Gewächshaus-Bedürfnisse kommen aus `src/game/ecology.ts` (Stellschrauben in `config.ts` → `eco`).
 - Fundorte sind in Version 1 nur für den Spieler selbst sichtbar. Für andere später nur über
   `publicLocation()` in `src/game/privacy.ts`: RL 1/0 und Bestand „es“ als TK25-Feld, RL 2/3/G/R ca. 300 m.

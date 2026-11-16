@@ -1,6 +1,7 @@
 // Robustes Speichern: Spielstand als JSON in localStorage, mit Version, Prüfung und Sicherungskopie.
 // Fotos liegen getrennt in IndexedDB (siehe photos.ts), weil localStorage dafür zu klein ist.
-import { SAVE_VERSION } from '../game/config';
+import { BALANCE, SAVE_VERSION } from '../game/config';
+import { makeDynamicSpecies } from '../game/catalog';
 import { newGame } from '../game/game';
 import type { GameState } from '../game/types';
 
@@ -20,8 +21,20 @@ export function serialize(state: GameState, now = new Date()): string {
 
 /** Upgrades older save files. Add a case for every new SAVE_VERSION. */
 function migrate(file: SaveFile): SaveFile {
-  const f = file;
-  // version 1 is the first released format – nothing to migrate yet.
+  let f = file;
+  if (f.version < 2) {
+    // v2: indicator values (EIVE). Plants get a soil reaction, learned species are rebuilt with the new needs.
+    const s = f.state;
+    f = {
+      ...f,
+      version: 2,
+      state: {
+        ...s,
+        plants: (s.plants ?? []).map((p) => ({ ...p, reaction: typeof p.reaction === 'number' ? p.reaction : BALANCE.eco.reaction.neutral })),
+        extraSpecies: (s.extraSpecies ?? []).map((x) => ({ ...makeDynamicSpecies(x.sci === 'wissenschaftlicher Name unbekannt' ? '' : x.sci, x.de, x.family), id: x.id })),
+      },
+    };
+  }
   return f;
 }
 

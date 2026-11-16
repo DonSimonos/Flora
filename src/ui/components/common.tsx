@@ -96,7 +96,7 @@ export function Sheet({ title, onClose, children }: { title: ReactNode; onClose:
   );
 }
 
-export function Meter({ label, value, max = 100, band, tone }: { label: string; value: number; max?: number; band?: [number, number]; tone?: 'gold' }) {
+export function Meter({ label, value, max = 100, band, tone, display }: { label: string; value: number; max?: number; band?: [number, number]; tone?: 'gold'; display?: string }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
   return (
     <div className="meter">
@@ -105,7 +105,7 @@ export function Meter({ label, value, max = 100, band, tone }: { label: string; 
         {band && <i className="band" style={{ left: `${band[0]}%`, width: `${band[1] - band[0]}%` }} />}
         <span style={{ width: `${pct}%` }} />
       </div>
-      <b>{Math.round(value)}</b>
+      <b>{display ?? Math.round(value)}</b>
     </div>
   );
 }
