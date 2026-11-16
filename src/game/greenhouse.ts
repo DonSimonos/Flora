@@ -1,6 +1,7 @@
 // Gewächshaus-Regeln: reine Funktionen, die eine Pflanze in eine neue Pflanze überführen.
 import { abilityInfo, type AbilityEffect } from '../data/abilities';
 import { BALANCE as B } from './config';
+import * as eco from './ecology';
 import { activeConditions, climateAt, type Climate } from './climate';
 import { rarityOf } from './rarity';
 import { rngFor } from './rng';
@@ -118,23 +119,25 @@ export interface Wellbeing {
 export function wellbeing(p: GreenPlant, sp: Species, climate: Climate): Wellbeing {
   let score = 100;
   const issues: string[] = [];
-  const [wLo, wHi] = B.waterBand[sp.needs.water];
+  const [wLo, wHi] = eco.waterBand(sp.eco);
   if (p.water < wLo) { score -= (wLo - p.water) * 1.2; issues.push('Durst'); }
   if (p.water > wHi) { score -= (p.water - wHi) * 1.2; issues.push('Zu nass'); }
-  const [nLo, nHi] = B.nutrientBand[sp.needs.nutrients];
+  const [nLo, nHi] = eco.nutrientBand(sp.eco);
   if (p.nutrients < nLo) { score -= (nLo - p.nutrients); issues.push('Hunger'); }
   if (p.nutrients > nHi) { score -= (p.nutrients - nHi) * 1.2; issues.push('Überdüngt'); }
+  const [rLo, rHi] = eco.reactionBand(sp.eco);
+  if (p.reaction < rLo) { score -= (rLo - p.reaction) * B.eco.reaction.perPoint; issues.push('Boden zu sauer'); }
+  if (p.reaction > rHi) { score -= (p.reaction - rHi) * B.eco.reaction.perPoint; issues.push('Boden zu kalkig'); }
   if (!effects(p).some((e) => e.kind === 'ignoreLight')) {
-    const diff = p.light - sp.needs.light;
-    if (diff < 0) { score -= 15 * -diff; issues.push('Zu dunkel'); }
-    if (diff > 0) { score -= 15 * diff; issues.push('Zu hell'); }
+    const lp = eco.lightPenalty(sp.eco, p.light);
+    if (lp.penalty > 0) { score -= lp.penalty; issues.push(lp.diff < 0 ? 'Zu dunkel' : 'Zu hell'); }
   }
   if (p.soil < 60) { score -= (60 - p.soil) * 0.4; if (p.soil < 45) issues.push('Boden ausgelaugt'); }
   if (p.overgrowth > 60) { score -= (p.overgrowth - 60) * 0.5; issues.push('Wildwuchs'); }
   if (p.disease) { score -= 25; issues.push(DISEASE_NAMES[p.disease]); }
-  const mountain = sp.habitats.includes('gebirge');
-  if (climate.weather === 'frost' && !ignores(p, 'frost') && !mountain) { score -= 15; issues.push('Frost'); }
-  if (p.zone === 'hoehe' && !mountain && !sp.habitats.includes('heide')) { score -= 10; issues.push('Höhenluft ungewohnt'); }
+  const temp = eco.temperatureIssues(sp.eco, p.zone, climate.weather === 'frost', ignores(p, 'frost'));
+  score -= temp.penalty;
+  issues.push(...temp.issues);
   return { score: Math.round(clamp(score)), issues };
 }
 
@@ -150,7 +153,7 @@ export function newPlant(id: string, seedId: string, findId: string, sp: Species
   const rand = rngFor(findId, 'gene');
   const genes = zeroStats();
   for (const s of STATS) genes[s] = Math.round((0.85 + rand() * 0.3) * 100) / 100;
-  const [nLo, nHi] = B.nutrientBand[sp.needs.nutrients];
+  const [nLo, nHi] = eco.nutrientBand(sp.eco);
   const plant: GreenPlant = {
     id,
     speciesId: sp.id,
@@ -165,6 +168,7 @@ export function newPlant(id: string, seedId: string, findId: string, sp: Species
     water: 60,
     nutrients: Math.round((nLo + nHi) / 2),
     soil: 70,
+    reaction: B.eco.reaction.neutral,
     health: 100,
     energy: 100,
     overgrowth: 0,
@@ -224,6 +228,10 @@ export function tick(p: GreenPlant, sp: Species, now: number): { plant: GreenPla
     plant.water = Math.max(waterFloor(plant), plant.water - waterLoss * h);
     plant.nutrients = Math.max(B.floors.nutrients, plant.nutrients - B.nutrientsPerHour * factorOf(plant, 'nutrientDecay') * h);
     plant.soil = Math.max(B.floors.soil, plant.soil - B.soilPerHour * h);
+    // without care, the soil slowly returns to neutral
+    const drift = B.eco.reaction.drift * h;
+    const toNeutral = B.eco.reaction.neutral - plant.reaction;
+    plant.reaction += Math.sign(toNeutral) * Math.min(Math.abs(toNeutral), drift);
     plant.energy = Math.min(100, plant.energy + B.energyPerHour * (sun ? 1.25 : 1) * factorOf(plant, 'energyRegen') * h);
     plant.overgrowth = Math.min(100, plant.overgrowth + B.overgrowthPerHour * h);
     const wb = wellbeing(plant, sp, c);
@@ -254,7 +262,7 @@ export function care(p: GreenPlant, sp: Species, action: CareId, now: number): A
   const careXp = 5 + plant.level;
   switch (action) {
     case 'giessen': {
-      const [wLo, wHi] = B.waterBand[sp.needs.water];
+      const [wLo, wHi] = eco.waterBand(sp.eco);
       const needed = plant.water < wLo;
       plant.water = clamp(plant.water + B.water.amount);
       if (plant.water > wHi + B.water.soggyAbove) {
@@ -269,12 +277,12 @@ export function care(p: GreenPlant, sp: Species, action: CareId, now: number): A
       break;
     }
     case 'duengen': {
-      const [nLo, nHi] = B.nutrientBand[sp.needs.nutrients];
+      const [nLo, nHi] = eco.nutrientBand(sp.eco);
       const needed = plant.nutrients < nLo;
       plant.nutrients = clamp(plant.nutrients + B.fertilizer.amount);
       if (plant.nutrients > nHi + 10) {
         plant.health = Math.max(B.floors.health, plant.health - 10);
-        events.push({ kind: 'warn', text: sp.needs.nutrients === 1 ? 'Diese Art braucht magere Böden – zu viel Dünger schadet ihr!' : 'Überdüngt!' });
+        events.push({ kind: 'warn', text: sp.eco.N < 3.5 ? 'Diese Art braucht magere Böden – zu viel Dünger schadet ihr!' : 'Überdüngt!' });
       }
       if (needed) plant = addXp(plant, sp, careXp, events);
       break;
@@ -294,6 +302,19 @@ export function care(p: GreenPlant, sp: Species, action: CareId, now: number): A
       if (plant.overgrowth > 50) plant = addXp(plant, sp, B.trainingXp(plant.level) * B.prune.xpIfOvergrown, events);
       plant.overgrowth = 0;
       plant.lastPruneAt = now;
+      break;
+    }
+    case 'kalken':
+    case 'ansaeuern': {
+      const [rLo, rHi] = eco.reactionBand(sp.eco);
+      const before = plant.reaction;
+      const dir = action === 'kalken' ? 1 : -1;
+      plant.reaction = Math.max(0, Math.min(10, Math.round((plant.reaction + dir * B.eco.reaction.step) * 10) / 10));
+      const dist = (r: number) => (r < rLo ? rLo - r : r > rHi ? r - rHi : 0);
+      if (dist(plant.reaction) < dist(before)) plant = addXp(plant, sp, careXp, events);
+      else if (dist(plant.reaction) > dist(before)) {
+        events.push({ kind: 'warn', text: action === 'kalken' ? 'Diese Art mag keinen Kalk – der Boden ist jetzt zu kalkig.' : 'Zu sauer für diese Art!' });
+      }
       break;
     }
     case 'behandeln': {

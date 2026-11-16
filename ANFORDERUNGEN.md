@@ -67,6 +67,15 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
   Kategorie 1 und 0 sowie Bestand „extrem selten“ nur als TK25-Rasterfeld (ca. 11 × 11 km);
   Kategorien 2, 3, G, R auf etwa 300 m vergröbert; sonst genau. Eigene Funde sieht man immer genau.
 
+## Artendatenbank und Zeigerwerte (seit 16.11.2026)
+- Nur offene Datenquellen. Zeigerwerte aus EIVE 1.0 (Dengler et al. 2023, CC BY 4.0): Feuchte,
+  Nährstoffe, Bodenreaktion, Licht, Temperatur (0–10) mit Nischenbreite, für 3.506 der 4.382 Arten der
+  Roten Liste. Die originalen Ellenberg-Werte Deutschlands (aus EIVE Suppl. 2) werden im Steckbrief gezeigt.
+  Die originale Ellenberg-Ausgabe (Buch/CD) ist nicht offen lizenziert und wird nicht verwendet.
+- Gewächshaus nutzt die Zeigerwerte: Wasser-, Nährstoff- und Bodenreaktionsbereich je Art, beste
+  Lichtstufe (weiter 3 Stufen), Temperatur (Frost, Höhenkammer). Neue Pflege: „Kalk streuen“ und
+  „Laubhumus geben“; der Boden kehrt langsam zu neutral zurück.
+
 ## Erkennung
 - Pl@ntNet ist eingerichtet (seit 16.11.2026): Schlüssel als GitHub-Secret `PLANTNET_KEY`,
   bei Pl@ntNet freigegeben für `https://donsimonos.github.io`. Kostenlos bis 500 Erkennungen pro Tag.

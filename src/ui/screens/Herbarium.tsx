@@ -11,10 +11,10 @@ import { useGame } from '../../store/store';
 import { precisionFor, precisionText, publicLocation } from '../../game/privacy';
 import { REDLIST_LICENSE } from '../../game/redlist';
 import { SourcesSheet } from '../components/Sources';
+import { EcoPanel } from '../components/EcoPanel';
+import { needsText } from '../../game/ecology';
 import { dateText, Photo, RarityBadge, Sheet, SpeciesCard, TYPE_NAMES } from '../components/common';
 
-const NEED = ['', 'wenig', 'mittel', 'viel'];
-const LIGHT = ['', 'Schatten', 'Halbschatten', 'Sonne'];
 
 export function Herbarium({ focus, onFocusDone }: { focus?: string | null; onFocusDone?: () => void }) {
   const state = useGame();
@@ -156,9 +156,11 @@ function SpeciesSheet({ species: s, onClose }: { species: Species; onClose: () =
             <dt>Bestand</dt><dd>{BESTAND_TEXT[s.bestand]}</dd>
             {s.endemic && <><dt>Besonders</dt><dd>Endemit – kommt weltweit nur in Deutschland vor</dd></>}
             <dt>Quelle</dt><dd className="tiny muted">Rote Liste: Metzing et al. (2018), {REDLIST_LICENSE}</dd>
-            <dt>Braucht</dt><dd>Wasser {NEED[s.needs.water]} · {LIGHT[s.needs.light]} · Nährstoffe {NEED[s.needs.nutrients]}</dd>
+            <dt>Mag</dt><dd>{needsText(s.eco)}</dd>
           </dl>
         </section>
+
+        <EcoPanel s={s} />
 
         <section className="panel">
           <h2>Fähigkeiten</h2>

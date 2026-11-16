@@ -1,4 +1,5 @@
 import { REDLIST, REDLIST_CITATION, REDLIST_LICENSE, REDLIST_LICENSE_URL, REDLIST_URL } from '../../game/redlist';
+import { ARTEN_MIT_ZEIGERWERTEN, EIVE_CITATION, EIVE_LICENSE, EIVE_LICENSE_URL, EIVE_URL, ELLENBERG_CITATION } from '../../game/artendb';
 import { Sheet } from './common';
 
 /** Quellen und Lizenzen – die Namensnennung der Roten Liste ist Pflicht (CC BY-ND 4.0). */
@@ -14,6 +15,13 @@ export function SourcesSheet({ onClose }: { onClose: () => void }) {
             Lizenz: <a href={REDLIST_LICENSE_URL} target="_blank" rel="noopener">{REDLIST_LICENSE}</a> (Namensnennung – keine Bearbeitung).
             Die Angaben werden unverändert angezeigt. Die Seltenheitsstufen in FLORA leiten sich daraus ab.
           </p>
+        </section>
+        <section className="panel stack">
+          <h2>Zeigerwerte</h2>
+          <p>Die Bedürfnisse der Pflanzen im Gewächshaus (Feuchte, Nährstoffe, Bodenreaktion, Licht, Temperatur) stammen für {ARTEN_MIT_ZEIGERWERTEN.toLocaleString('de-DE')} Arten aus:</p>
+          <p className="muted">{EIVE_CITATION} – <a href={EIVE_URL} target="_blank" rel="noopener">{EIVE_URL}</a> – Lizenz <a href={EIVE_LICENSE_URL} target="_blank" rel="noopener">{EIVE_LICENSE}</a>.</p>
+          <p>Ellenberg-Zeigerwerte für Deutschland:</p>
+          <p className="muted">{ELLENBERG_CITATION}</p>
         </section>
         <section className="panel stack">
           <h2>Pflanzenerkennung</h2>

@@ -1,7 +1,7 @@
 // Zentrale Spielbalance. Alle Zahlen, die das Spielgefühl bestimmen, stehen hier.
-import type { ConditionId, Level3, RarityId, StatId } from './types';
+import type { ConditionId, RarityId, StatId } from './types';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export const RARITIES: { id: RarityId; name: string; color: string; stars: number }[] = [
   { id: 'gewoehnlich', name: 'Gewöhnlich', color: '#9fb39a', stars: 1 },
@@ -57,9 +57,17 @@ export const BALANCE = {
   /** Extra xp factor for training in the plant's favourite discipline. */
   favouriteBonus: 1.5,
 
-  /** Optimal ranges for water and nutrients per need level. */
-  waterBand: { 1: [20, 45], 2: [40, 70], 3: [65, 95] } as Record<Level3, [number, number]>,
-  nutrientBand: { 1: [10, 35], 2: [35, 65], 3: [60, 90] } as Record<Level3, [number, number]>,
+  /** Bedürfnisse aus den Zeigerwerten (EIVE 0–10), siehe ecology.ts. */
+  eco: {
+    waterBase: 8,
+    waterPerM: 8.4, // M 0 -> 8, M 10 -> 92
+    nutrientBase: 6,
+    nutrientPerN: 8.8, // N 0 -> 6, N 10 -> 94
+    band: { minHalf: 9, maxHalf: 22, perWidth: 3 }, // half range width from niche width
+    reaction: { minHalf: 0.8, maxHalf: 2.4, perWidth: 0.35, perPoint: 9, drift: 0.03, neutral: 5.5, step: 1.5 },
+    light: { minTol: 0.8, maxTol: 2.4, perWidth: 0.3, perPoint: 7 },
+    temperature: { frostSafeBelow: 3.5, frostPerPoint: 4, coolOkBelow: 5.5, warmOkAbove: 2.5, perPoint: 5 },
+  },
 
   // --- Fähigkeiten und Entwicklung ---
   abilityLevels: [5, 15, 30],

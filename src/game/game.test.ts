@@ -283,3 +283,86 @@ describe('Schutz der Fundorte', () => {
     }
   });
 });
+
+describe('Artendatenbank und Zeigerwerte (EIVE 1.0)', () => {
+  it('alle eingebauten Arten haben echte Zeigerwerte', async () => {
+    const { SPECIES } = await import('../data/species');
+    const missing = SPECIES.filter((s) => s.ecoSource !== 'eive').map((s) => s.id);
+    expect(missing).toEqual([]);
+    const sonnentau = SPECIES.find((s) => s.id === 'sonnentau')!;
+    expect(sonnentau.eco.R).toBeLessThan(2); // Moor: sehr sauer
+    expect(sonnentau.ellenberg?.[0]).toBe(9); // Ellenberg F 9
+  });
+
+  it('artInfo verbindet Rote Liste, EIVE und Ellenberg', async () => {
+    const { artInfo } = await import('./artendb');
+    const a = artInfo('Arnica montana L.')!;
+    expect(a.redList.rl).toBe('3');
+    expect(a.eco!.N).toBeLessThan(3);
+    expect(a.ellenberg).toEqual([5, 2, 3, 9, 4]);
+    expect(artInfo('Phantasia inventa')).toBeNull();
+  });
+
+  it('neu gefundene Arten bekommen ihre Zeigerwerte', () => {
+    let s = game.addFind(game.newGame(), find('f1'));
+    s = game.confirmFind(s, 'f1', { sci: 'Bromus erectus', de: null, family: null, score: 0.8, verified: true });
+    const sp = speciesById(s, s.discovered[0]);
+    expect(sp.ecoSource).toBe('eive');
+    expect(sp.eco.R).toBeGreaterThan(6); // Kalk-Magerrasen
+  });
+});
+
+describe('Ökologie im Gewächshaus', () => {
+  it('Bänder folgen den Zeigerwerten', async () => {
+    const eco = await import('./ecology');
+    const { SPECIES } = await import('../data/species');
+    const by = (id: string) => SPECIES.find((s) => s.id === id)!.eco;
+    expect(eco.waterBand(by('wasserfenchel'))[0]).toBeGreaterThan(eco.waterBand(by('stranddistel'))[1] - 20);
+    expect(eco.nutrientBand(by('brennnessel'))[0]).toBeGreaterThan(eco.nutrientBand(by('sonnentau'))[1]);
+    expect(eco.bestLamp(by('wurmfarn'))).toBeLessThan(eco.bestLamp(by('arnika')));
+    expect(eco.reactionBand(by('frauenschuh'))[0]).toBeGreaterThan(eco.reactionBand(by('sonnentau'))[1]);
+  });
+
+  it('Sonnentau braucht sauren Boden: Laubhumus hilft, Kalk schadet', () => {
+    const { s, plantId } = withPlant('sonnentau');
+    const sp = speciesById(s, 'sonnentau');
+    const climate = climateAt(T0);
+    const before = gh.wellbeing(s.plants[0], sp, climate);
+    expect(before.issues).toContain('Boden zu kalkig');
+    let st = s;
+    for (let i = 0; i < 3; i++) st = game.careAction(st, plantId, 'ansaeuern', T0 + i).state;
+    expect(gh.wellbeing(st.plants[0], sp, climate).issues).not.toContain('Boden zu kalkig');
+    const lime = game.careAction(st, plantId, 'kalken', T0 + 10);
+    expect(lime.state.plants[0].reaction).toBeGreaterThan(st.plants[0].reaction);
+  });
+
+  it('Bodenreaktion kehrt langsam zu neutral zurück', () => {
+    const { s, plantId } = withPlant('sonnentau');
+    let st = s;
+    for (let i = 0; i < 3; i++) st = game.careAction(st, plantId, 'ansaeuern', T0 + i).state;
+    const acid = st.plants[0].reaction;
+    const later = game.tickAll(st, T0 + 24 * H).state.plants[0].reaction;
+    expect(later).toBeGreaterThan(acid);
+    expect(later).toBeLessThanOrEqual(BALANCE_NEUTRAL);
+  });
+
+  it('Edelweiß fühlt sich in der Höhenkammer wohler als im Tal', () => {
+    const { s, plantId } = withPlant('edelweiss');
+    const sp = speciesById(s, 'edelweiss');
+    const c = climateAt(T0);
+    const tal = gh.wellbeing(s.plants[0], sp, c);
+    const hoch = gh.wellbeing(game.zoneAction(s, plantId, 'hoehe').plants[0], sp, c);
+    expect(tal.issues).toContain('Zu warm – lieber Höhenkammer');
+    expect(hoch.score).toBeGreaterThan(tal.score);
+  });
+
+  it('alte Spielstände (Version 1) werden umgestellt', () => {
+    const { s } = withPlant('arnika');
+    const old = { ...s, plants: s.plants.map(({ reaction: _r, ...p }) => p) };
+    const loaded = parse(JSON.stringify({ version: 1, savedAt: '', state: old }))!;
+    expect(loaded.plants[0].reaction).toBe(BALANCE_NEUTRAL);
+  });
+});
+
+const BALANCE_NEUTRAL = B.eco.reaction.neutral;
+

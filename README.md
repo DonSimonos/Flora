@@ -30,8 +30,18 @@ Für die Erkennung lokal eine Datei `.env.local` mit `VITE_PLANTNET_KEY=...` anl
 
 ## Quellen
 
+Die Artendatenbank (`src/game/artendb.ts`) verbindet für jede Art Deutschlands Rote Liste, Zeigerwerte
+und Ellenberg-Werte. Die Datendateien in `src/data/` werden mit den Werkzeugen in `tools/` aus den
+Originaldateien erzeugt und nicht von Hand geändert.
+
 - Pflanzenbestimmung: [Pl@ntNet](https://plantnet.org)
 - Karte: © OpenStreetMap-Mitwirkende
+- Zeigerwerte: Dengler, J., Jansen, F., Chusova, O. et al. (2023): Ecological Indicator Values for Europe
+  (EIVE) 1.0. Vegetation Classification and Survey 4: 7–29. https://doi.org/10.3897/VCS.98324 –
+  Lizenz [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.de)
+  (`tools/import_eive.py` → `src/data/eive-1.0.json`)
+- Ellenberg-Zeigerwerte Deutschland: Ellenberg et al. (2001), Scripta Geobotanica 18 – übernommen aus
+  EIVE 1.0, Supplementary material 2 (CC BY 4.0)
 - Rote Liste: Metzing et al. (2018): Rote Liste und Gesamtartenliste der Farn- und Blütenpflanzen
   (Trachaeophyta) Deutschlands. – In: Metzing, D.; Hofbauer, N.; Ludwig, G. & Matzke-Hajek, G. (Red.):
   Rote Liste gefährdeter Tiere, Pflanzen und Pilze Deutschlands. Band 7: Pflanzen. – Münster

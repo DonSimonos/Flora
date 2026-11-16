@@ -135,9 +135,9 @@ p { margin: 0; }
 .bar { height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); overflow: hidden; position: relative; }
 .bar > span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--leaf), #b9f0a2); transition: width 0.5s ease; }
 .bar.gold > span { background: linear-gradient(90deg, var(--gold), var(--gold-2)); }
-.bar .band { position: absolute; top: 0; bottom: 0; border-left: 2px solid rgba(255, 255, 255, 0.55); border-right: 2px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.08); }
-.meter { display: grid; grid-template-columns: 112px 1fr 38px; align-items: center; gap: 10px; font-size: 14px; }
-.meter b { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.bar .band { position: absolute; top: 0; bottom: 0; z-index: 1; pointer-events: none; border-left: 2px solid rgba(255, 255, 255, 0.85); border-right: 2px solid rgba(255, 255, 255, 0.85); background: rgba(255, 255, 255, 0.22); }
+.meter { display: grid; grid-template-columns: 112px 1fr auto; align-items: center; gap: 10px; font-size: 14px; }
+.meter b { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; min-width: 38px; }
 
 /* ---------- Rarity ---------- */
 .r-gewoehnlich { --r: #9fb39a; }
@@ -343,3 +343,8 @@ p { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* ---------- Zeigerwerte ---------- */
+.eco-scale { position: relative; height: 10px; border-radius: 6px; margin-top: 4px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12)); }
+.eco-scale i { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: rgba(127, 209, 140, 0.35); }
+.eco-scale b { position: absolute; top: -3px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--leaf); box-shadow: 0 0 0 3px var(--bg-2); }

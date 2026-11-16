@@ -1,12 +1,11 @@
 import { abilityInfo } from '../../data/abilities';
 import { speciesById } from '../../game/catalog';
+import { needsText } from '../../game/ecology';
 import { popReveal } from '../../game/game';
 import { rarityInfo, rarityOf, rarityRank, RL_TEXT } from '../../game/rarity';
 import { update, useGame } from '../../store/store';
 import { SpeciesCard, TYPE_NAMES } from './common';
 
-const NEED = ['', 'wenig', 'mittel', 'viel'];
-const LIGHT = ['', 'Schatten', 'Halbschatten', 'Sonne'];
 
 /** Discovery overlay, shown for each queued reveal. Rarer = more spectacle. */
 export function Reveal() {
@@ -40,7 +39,7 @@ export function Reveal() {
           </div>
           <p>{sp.description}</p>
           <p className="muted">
-            Braucht: Wasser {NEED[sp.needs.water]} · Licht {LIGHT[sp.needs.light]} · Nährstoffe {NEED[sp.needs.nutrients]}
+            Mag: {needsText(sp.eco)}
           </p>
           {ability && (
             <p>

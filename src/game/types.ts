@@ -20,13 +20,27 @@ export type StatId = 'wachstum' | 'vitalitaet' | 'resistenz' | 'anpassung' | 'en
 /** 1 = wenig, 2 = mittel, 3 = viel */
 export type Level3 = 1 | 2 | 3;
 
+/** Ökologische Zeigerwerte (EIVE, 0–10): Lage und Nischenbreite (b). */
+export interface Eco {
+  M: number; // Feuchte
+  N: number; // Nährstoffe
+  R: number; // Bodenreaktion
+  L: number; // Licht
+  T: number; // Temperatur
+  Mb: number;
+  Nb: number;
+  Rb: number;
+  Lb: number;
+  Tb: number;
+}
+
 export interface Needs {
   water: Level3;
   light: Level3;
   nutrients: Level3;
 }
 
-export type CareId = 'giessen' | 'duengen' | 'boden' | 'schnitt' | 'behandeln';
+export type CareId = 'giessen' | 'duengen' | 'boden' | 'schnitt' | 'behandeln' | 'kalken' | 'ansaeuern';
 export type TrainingId = 'wachstum' | 'wurzel' | 'licht' | 'resistenz' | 'anpassung';
 export type ConditionId = 'nacht' | 'regen' | 'sonne' | 'nebel' | 'frost' | 'hoehe';
 export type DiseaseId = 'mehltau' | 'blattlaeuse' | 'wurzelfaeule';
@@ -61,7 +75,12 @@ export interface Species {
   rl: RedListCat;
   bestand: Bestand;
   description: string;
-  needs: Needs;
+  /** Bedürfnisse aus den Zeigerwerten. */
+  eco: Eco;
+  /** 'eive' = echte Zeigerwerte, 'schaetzung' = aus dem Lebensraum geschätzt. */
+  ecoSource: 'eive' | 'schaetzung';
+  /** Ellenberg Deutschland (F, N, R, L, T), falls vorhanden. */
+  ellenberg?: (number | null)[];
   /** 1..10 per stat, before level, genes and training. */
   baseStats: Record<StatId, number>;
   /** Ability ids, unlocked in this order. */
@@ -130,6 +149,7 @@ export interface GreenPlant {
   water: number; // 0..100
   nutrients: number; // 0..100
   soil: number; // 0..100
+  reaction: number; // Bodenreaktion 0 (sehr sauer) .. 10 (stark kalkhaltig)
   health: number; // 0..100
   energy: number; // 0..100, spent on training
   overgrowth: number; // 0..100, reset by pruning

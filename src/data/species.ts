@@ -1,8 +1,9 @@
 // Eingebaute Artenliste.
-// Rote-Liste-Kategorie und Bestand werden beim Start aus der offiziellen Roten Liste
-// (Metzing et al. 2018, src/data/rote-liste-2018.json) übernommen; die Werte in sp(...) sind nur
-// Rückfall, falls eine Art dort nicht steht. Neue Arten: weitere sp(...)-Einträge anhängen.
-import { lookupRedList } from '../game/redlist';
+// Rote-Liste-Kategorie, Bestand und Zeigerwerte kommen beim Start aus der Artendatenbank
+// (src/game/artendb.ts: Metzing et al. 2018 + EIVE 1.0 + Ellenberg). Die Werte in sp(...)
+// (rl, bestand, needs) sind nur Rückfall, falls eine Art dort nicht steht. Neue Arten: weitere sp(...)-Einträge anhängen.
+import { artInfo } from '../game/artendb';
+import { ecoFromLevels } from '../game/ecology';
 import type {
   Bestand, EvolutionForm, FormEffect, FormTrigger, HabitatId, Needs, PlantType, RedListCat, Species, StatId,
 } from '../game/types';
@@ -105,7 +106,8 @@ function sp(i: SpecInput): Species {
     rl: i.rl,
     bestand: i.bestand,
     description: i.description,
-    needs: { ...HABITAT_NEEDS[i.habitats[0]], ...i.needs },
+    eco: (({ water, light, nutrients }: Needs) => ecoFromLevels(water, light, nutrients))({ ...HABITAT_NEEDS[i.habitats[0]], ...i.needs }),
+    ecoSource: 'schaetzung',
     baseStats: { ...base, potenzial: 0 }, // potenzial is filled from rarity, see plantStats()
     abilities: i.abilities ?? TYPE_ABILITIES[i.type],
     forms: i.forms ?? genericForms(i.habitats[0]),
@@ -437,8 +439,18 @@ const RAW_SPECIES: Species[] = [
   sp({ id: 'bienenragwurz', sci: 'Ophrys apifera', de: 'Bienen-Ragwurz', family: 'Orchideen', habitats: ['wiese'], type: 'orchidee', rl: '*', bestand: 's', color: '#c78fb0', needs: { nutrients: 1 }, description: 'Ahmt eine Biene nach, bestäubt sich in Mitteleuropa aber meistens selbst.' }),
 ];
 
-/** Built-in species with official Rote-Liste data (falls back to the values above if not listed). */
+/** Built-in species with official data from the Artendatenbank (falls back to the values above if not listed). */
 export const SPECIES: Species[] = RAW_SPECIES.map((s) => {
-  const e = [s.sci, ...(s.synonyms ?? [])].map(lookupRedList).find(Boolean);
-  return e ? { ...s, rl: e.rl, bestand: e.bestand, rlOfficial: true, endemic: e.endemic } : s;
+  const a = [s.sci, ...(s.synonyms ?? [])].map(artInfo).find(Boolean);
+  if (!a) return s;
+  const { redList: e, eco, ellenberg } = a;
+  return {
+    ...s,
+    rl: e.rl,
+    bestand: e.bestand,
+    rlOfficial: true,
+    endemic: e.endemic,
+    ...(eco ? { eco, ecoSource: 'eive' as const } : {}),
+    ...(ellenberg ? { ellenberg } : {}),
+  };
 });
