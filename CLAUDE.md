@@ -7,6 +7,8 @@ dort Änderungen am Konzept festhalten (alten Text ersetzen, nicht stapeln).
 - Der Besitzer (DonSimonos) ist kein Programmierer: auf Deutsch, in einfachen Worten erklären,
   vor größeren Entscheidungen fragen.
 - `main` geht bei jedem Push automatisch online (`.github/workflows/pages.yml`).
+  Deshalb nicht direkt auf `main` arbeiten: Änderungen auf einem Zweig `feature/<thema>` mit
+  Pull Request; DonSimonos sieht ihn sich an und bestätigt das Zusammenführen.
   Vorher müssen `npm test` und `npm run build` fehlerfrei laufen.
 - Pl@ntNet-Schlüssel nur als GitHub-Secret `PLANTNET_KEY` bzw. lokal in `.env.local`, nie im Code.
 
