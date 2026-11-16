@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlantArt } from '../../art/PlantArt';
 import { SPECIES } from '../../data/species';
 import { BALANCE } from '../../game/config';
-import { addFind, confirmFind, deleteFind, uid } from '../../game/game';
+import { addFind, confirmFind, deleteFind, uid, updateFind } from '../../game/game';
 import { matchSpecies } from '../../game/catalog';
 import { rarityFrom, rarityOf } from '../../game/rarity';
 import { searchRedList } from '../../game/redlist';
@@ -156,6 +156,11 @@ function IdentifySheet({ findId, onClose }: { findId: string; onClose: () => voi
     update((s) => confirmFind(s, findId, { sci, de, family: null, score: null, verified: false }));
   }
 
+  function retry() {
+    update((s) => updateFind(s, findId, { status: 'pending', error: null, candidates: [] }));
+    void identifyFind(findId);
+  }
+
   async function discard() {
     const f = getState().finds.find((x) => x.id === findId);
     update((s) => deleteFind(s, findId));
@@ -186,6 +191,9 @@ function IdentifySheet({ findId, onClose }: { findId: string; onClose: () => voi
         {!showManual && find.status !== 'pending' && (
           <>
             {find.error && <p className="notice">{find.error}</p>}
+            {plantnetConfigured && (find.status === 'failed' || find.candidates.length === 0) && (
+              <button className="btn" onClick={retry}>🔄 Erneut erkennen</button>
+            )}
             {find.candidates.length > 0 && (
               <>
                 <p className="muted small">Welche Art ist es? Vorschläge von Pl@ntNet:</p>
