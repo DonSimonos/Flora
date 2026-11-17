@@ -346,14 +346,14 @@ describe('Ökologie im Gewächshaus', () => {
     expect(later).toBeLessThanOrEqual(BALANCE_NEUTRAL);
   });
 
-  it('Edelweiß fühlt sich in der Höhenkammer wohler als im Tal', () => {
+  it('Edelweiß fühlt sich in den Alpen wohler als im Anzuchthaus', () => {
     const { s, plantId } = withPlant('edelweiss');
     const sp = speciesById(s, 'edelweiss');
     const c = climateAt(T0);
-    const tal = gh.wellbeing(s.plants[0], sp, c);
-    const hoch = gh.wellbeing(game.zoneAction(s, plantId, 'hoehe').plants[0], sp, c);
-    expect(tal.issues).toContain('Zu warm – lieber Höhenkammer');
-    expect(hoch.score).toBeGreaterThan(tal.score);
+    const anzucht = gh.wellbeing(s.plants[0], sp, c);
+    const alpen = gh.wellbeing({ ...s.plants.find((p) => p.id === plantId)!, room: 'alpen' }, sp, c);
+    expect(anzucht.issues).toContain('Zu warm hier');
+    expect(alpen.score).toBeGreaterThan(anzucht.score);
   });
 
   it('alte Spielstände (Version 1) werden umgestellt', () => {
@@ -365,4 +365,80 @@ describe('Ökologie im Gewächshaus', () => {
 });
 
 const BALANCE_NEUTRAL = B.eco.reaction.neutral;
+
+describe('Lebensraum-Räume', () => {
+  function discover(ids: string[]): GameState {
+    let s = game.newGame();
+    ids.forEach((id, i) => {
+      s = game.addFind(s, find('r' + i));
+      s = game.confirmFind(s, 'r' + i, { speciesId: id, score: 0.9, verified: true });
+    });
+    return s;
+  }
+
+  it('ordnet Arten über die Zeigerwerte passenden Räumen zu', async () => {
+    const { bestRoom } = await import('./rooms');
+    const { SPECIES } = await import('../data/species');
+    const room = (id: string) => bestRoom(SPECIES.find((x) => x.id === id)!);
+    expect(room('sonnentau')).toBe('moor');
+    expect(room('teichrose')).toBe('teich');
+    expect(room('edelweiss')).toBe('alpen');
+    expect(room('stranddistel')).toBe('salz');
+    expect(room('besenheide')).toBe('heide');
+    expect(room('fliegenragwurz')).toBe('kalkrasen');
+    expect(room('ackerrittersporn')).toBe('kalkacker'); // Kennart
+  });
+
+  it('ein Raum öffnet sich nach 3 passenden Arten und wächst mit', async () => {
+    const { roomStatus } = await import('./rooms');
+    let s = discover(['sonnentau', 'wollgras']);
+    expect(roomStatus(s, 'moor').unlocked).toBe(false);
+    s = discover(['sonnentau', 'wollgras', 'moorlilie']);
+    expect(roomStatus(s, 'moor')).toMatchObject({ unlocked: true, slots: 2 });
+    expect(s.revealQueue.at(-1)?.newRooms).toEqual(['moor']);
+    s = discover(['sonnentau', 'wollgras', 'moorlilie', 'glockenheide', 'moosbeere', 'sumpfporst']);
+    expect(roomStatus(s, 'moor').slots).toBe(3);
+  });
+
+  it('Geheimraum: eine gefährdete Kennart öffnet sofort, sonst zwei', async () => {
+    const { roomStatus } = await import('./rooms');
+    let s = game.addFind(game.newGame(), find('k1'));
+    s = game.confirmFind(s, 'k1', { sci: 'Malva neglecta', de: null, family: null, score: 0.9, verified: true }); // RL *
+    expect(roomStatus(s, 'hofsaum').unlocked).toBe(false);
+    s = game.addFind(s, find('k2'));
+    s = game.confirmFind(s, 'k2', { sci: 'Ballota nigra', de: null, family: null, score: 0.9, verified: true });
+    expect(roomStatus(s, 'hofsaum').unlocked).toBe(true);
+    let t = game.addFind(game.newGame(), find('k3'));
+    t = game.confirmFind(t, 'k3', { sci: 'Lobelia dortmanna', de: null, family: null, score: 0.9, verified: true }); // RL 1
+    expect(roomStatus(t, 'heideweiher').unlocked).toBe(true);
+    expect(t.revealQueue.at(-1)?.newRooms).toEqual(['heideweiher']);
+  });
+
+  it('Samen kommen in ihren Raum, wenn er offen ist; der Raum hält seine Bedingungen', async () => {
+    const { setpoints } = await import('./rooms');
+    const s = discover(['sonnentau', 'wollgras', 'moorlilie']);
+    const seed = s.seeds.find((x) => x.speciesId === 'sonnentau')!;
+    const r = game.plantSeed(s, seed.id, T0);
+    const plant = r.state.plants[0];
+    expect(plant.room).toBe('moor');
+    const later = game.tickAll(r.state, T0 + 24 * H).state.plants[0];
+    const sp = setpoints('moor');
+    expect(Math.abs(later.reaction - sp.reaction)).toBeLessThan(0.5);
+    expect(Math.abs(later.water - sp.water)).toBeLessThan(10);
+    expect(gh.wellbeing(later, speciesById(s, 'sonnentau'), climateAt(T0 + 24 * H)).issues).not.toContain('Boden zu kalkig');
+  });
+
+  it('Umziehen nur in offene Räume mit freiem Beet', () => {
+    const { s, plantId } = withPlant('sonnentau');
+    expect(game.moveAction(s, plantId, 'moor').error).toMatch(/nicht freigeschaltet/);
+  });
+
+  it('Spielstände der Version 2 kommen ins Anzuchthaus', () => {
+    const { s } = withPlant('arnika');
+    const old = { ...s, plants: s.plants.map(({ room: _r, ...p }) => ({ ...p, zone: 'hoehe' })) };
+    const loaded = parse(JSON.stringify({ version: 2, savedAt: '', state: old }))!;
+    expect(loaded.plants[0].room).toBe('anzucht');
+    expect('zone' in loaded.plants[0]).toBe(false);
+  });
+});
 

@@ -1,6 +1,6 @@
 import { CLIMATE } from './config';
 import { rngFor, weighted } from './rng';
-import type { ConditionId, ZoneId } from './types';
+import type { ConditionId, RoomId } from './types';
 
 export type Weather = keyof typeof CLIMATE.weatherWeights;
 
@@ -46,13 +46,13 @@ export function weatherView(c: Climate): { name: string; icon: string; hint: str
 }
 
 /** Conditions active for a plant right now (used for evolution and abilities). */
-export function activeConditions(c: Climate, zone: ZoneId): ConditionId[] {
+export function activeConditions(c: Climate, room: RoomId): ConditionId[] {
   const out: ConditionId[] = [];
   if (c.night) out.push('nacht');
   if (c.weather === 'regen') out.push('regen');
   if (c.weather === 'sonne' && !c.night) out.push('sonne');
   if (c.weather === 'nebel') out.push('nebel');
   if (c.weather === 'frost') out.push('frost');
-  if (zone === 'hoehe') out.push('hoehe');
+  if (room === 'alpen') out.push('hoehe');
   return out;
 }

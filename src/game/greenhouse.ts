@@ -2,11 +2,12 @@
 import { abilityInfo, type AbilityEffect } from '../data/abilities';
 import { BALANCE as B } from './config';
 import * as eco from './ecology';
+import { setpoints } from './rooms';
 import { activeConditions, climateAt, type Climate } from './climate';
 import { rarityOf } from './rarity';
 import { rngFor } from './rng';
 import type {
-  CareId, ConditionId, DiseaseId, EvolutionForm, GreenPlant, Level3, Species, StatId, TrainingId, ZoneId,
+  CareId, ConditionId, DiseaseId, EvolutionForm, GreenPlant, Level3, RoomId, Species, StatId, TrainingId,
 } from './types';
 
 export const STATS: StatId[] = ['wachstum', 'vitalitaet', 'resistenz', 'anpassung', 'energie', 'potenzial'];
@@ -111,6 +112,11 @@ export function stageOf(p: GreenPlant): Stage {
 
 // ---------- Wohlbefinden ----------
 
+/** Lamp setting in effect: rooms have their own light, only the Anzuchthaus uses the plant's lamp. */
+export function effectiveLight(p: GreenPlant): Level3 {
+  return p.room === 'anzucht' ? p.light : setpoints(p.room).lamp;
+}
+
 export interface Wellbeing {
   score: number;
   issues: string[];
@@ -128,14 +134,15 @@ export function wellbeing(p: GreenPlant, sp: Species, climate: Climate): Wellbei
   const [rLo, rHi] = eco.reactionBand(sp.eco);
   if (p.reaction < rLo) { score -= (rLo - p.reaction) * B.eco.reaction.perPoint; issues.push('Boden zu sauer'); }
   if (p.reaction > rHi) { score -= (p.reaction - rHi) * B.eco.reaction.perPoint; issues.push('Boden zu kalkig'); }
+  const sets = setpoints(p.room);
   if (!effects(p).some((e) => e.kind === 'ignoreLight')) {
-    const lp = eco.lightPenalty(sp.eco, p.light);
+    const lp = eco.lightPenalty(sp.eco, effectiveLight(p));
     if (lp.penalty > 0) { score -= lp.penalty; issues.push(lp.diff < 0 ? 'Zu dunkel' : 'Zu hell'); }
   }
   if (p.soil < 60) { score -= (60 - p.soil) * 0.4; if (p.soil < 45) issues.push('Boden ausgelaugt'); }
   if (p.overgrowth > 60) { score -= (p.overgrowth - 60) * 0.5; issues.push('Wildwuchs'); }
   if (p.disease) { score -= 25; issues.push(DISEASE_NAMES[p.disease]); }
-  const temp = eco.temperatureIssues(sp.eco, p.zone, climate.weather === 'frost', ignores(p, 'frost'));
+  const temp = eco.temperatureIssues(sp.eco, sets.T, climate.weather === 'frost', ignores(p, 'frost'));
   score -= temp.penalty;
   issues.push(...temp.issues);
   return { score: Math.round(clamp(score)), issues };
@@ -149,7 +156,7 @@ function wbFactor(score: number): number {
 
 // ---------- Creation ----------
 
-export function newPlant(id: string, seedId: string, findId: string, sp: Species, now: number): GreenPlant {
+export function newPlant(id: string, seedId: string, findId: string, sp: Species, now: number, room: RoomId = 'anzucht'): GreenPlant {
   const rand = rngFor(findId, 'gene');
   const genes = zeroStats();
   for (const s of STATS) genes[s] = Math.round((0.85 + rand() * 0.3) * 100) / 100;
@@ -173,7 +180,7 @@ export function newPlant(id: string, seedId: string, findId: string, sp: Species
     energy: 100,
     overgrowth: 0,
     light: 2,
-    zone: 'tal',
+    room,
     disease: null,
     trainCount: { wachstum: 0, wurzel: 0, licht: 0, resistenz: 0, anpassung: 0 },
     condCount: { nacht: 0, regen: 0, sonne: 0, nebel: 0, frost: 0, hoehe: 0 },
@@ -228,10 +235,20 @@ export function tick(p: GreenPlant, sp: Species, now: number): { plant: GreenPla
     plant.water = Math.max(waterFloor(plant), plant.water - waterLoss * h);
     plant.nutrients = Math.max(B.floors.nutrients, plant.nutrients - B.nutrientsPerHour * factorOf(plant, 'nutrientDecay') * h);
     plant.soil = Math.max(B.floors.soil, plant.soil - B.soilPerHour * h);
-    // without care, the soil slowly returns to neutral
-    const drift = B.eco.reaction.drift * h;
-    const toNeutral = B.eco.reaction.neutral - plant.reaction;
-    plant.reaction += Math.sign(toNeutral) * Math.min(Math.abs(toNeutral), drift);
+    if (plant.room === 'anzucht') {
+      // without care, the soil slowly returns to neutral
+      const drift = B.eco.reaction.drift * h;
+      const toNeutral = B.eco.reaction.neutral - plant.reaction;
+      plant.reaction += Math.sign(toNeutral) * Math.min(Math.abs(toNeutral), drift);
+    } else {
+      // a habitat room holds its own conditions
+      const sp0 = setpoints(plant.room);
+      const pull = B.rooms.pull;
+      const toward = (v: number, target: number, rate: number) => v + Math.sign(target - v) * Math.min(Math.abs(target - v), rate * h);
+      plant.water = toward(plant.water, sp0.water, pull.water + waterLoss);
+      plant.nutrients = toward(plant.nutrients, sp0.nutrients, pull.nutrients);
+      plant.reaction = toward(plant.reaction, sp0.reaction, pull.reaction);
+    }
     plant.energy = Math.min(100, plant.energy + B.energyPerHour * (sun ? 1.25 : 1) * factorOf(plant, 'energyRegen') * h);
     plant.overgrowth = Math.min(100, plant.overgrowth + B.overgrowthPerHour * h);
     const wb = wellbeing(plant, sp, c);
@@ -332,8 +349,8 @@ export function setLight(p: GreenPlant, light: Level3): GreenPlant {
   return { ...p, light };
 }
 
-export function setZone(p: GreenPlant, zone: ZoneId): GreenPlant {
-  return { ...p, zone };
+export function setRoom(p: GreenPlant, room: RoomId): GreenPlant {
+  return { ...p, room };
 }
 
 // ---------- Training ----------
@@ -358,7 +375,7 @@ export function train(p: GreenPlant, sp: Species, kind: TrainingId, now: number)
   const blocked = canTrain(p);
   if (blocked) return { ok: false, plant: p, events, reason: blocked };
   const c = climateAt(now);
-  const conds = activeConditions(c, p.zone);
+  const conds = activeConditions(c, p.room);
   const rand = rngFor(p.id, p.actions, 'train', kind);
   let plant: GreenPlant = {
     ...p,

@@ -3,9 +3,12 @@ import { PlantArt } from '../../art/PlantArt';
 import { abilityInfo } from '../../data/abilities';
 import { BALANCE, CONDITION_NAMES, STAT_NAMES } from '../../game/config';
 import { activeConditions, climateAt, weatherView } from '../../game/climate';
-import { bestLamp, nutrientBand, reactionBand, reactionWord, temperatureWord, waterBand } from '../../game/ecology';
+import { bestLamp, moistureWord, nutrientBand, nutrientWord, reactionBand, reactionWord, temperatureWord, waterBand } from '../../game/ecology';
 import { speciesById } from '../../game/catalog';
-import { careAction, evolveAction, lightAction, plantSeed, trainAction, zoneAction } from '../../game/game';
+import { careAction, defaultRoom, evolveAction, lightAction, moveAction, plantSeed, trainAction } from '../../game/game';
+import { bestRoom, roomStatuses, setpoints } from '../../game/rooms';
+import { ROOMS, roomInfo, type RoomId } from '../../data/rooms';
+import { RoomScene } from '../../art/RoomScene';
 import {
   availableForms, canTrain, DISEASE_NAMES, favouriteTraining, formOf, formProgress, hoursText, plantStats, STATS, stageOf, wellbeing, xpToNext, type GameEvent,
 } from '../../game/greenhouse';
@@ -44,25 +47,54 @@ export function Greenhouse() {
   const climate = climateAt(now);
   const w = weatherView(climate);
   const [open, setOpen] = useState<string | null>(null);
-  const free = BALANCE.greenhouseSlots - state.plants.length;
+  const [roomId, setRoomId] = useState<RoomId>(() => {
+    try {
+      return (localStorage.getItem('flora-room') as RoomId) || 'anzucht';
+    } catch {
+      return 'anzucht';
+    }
+  });
+  const statuses = roomStatuses(state);
+  const st = statuses.find((r) => r.id === roomId) ?? statuses[0];
+  const room = roomInfo(st.id);
+  const plants = state.plants.filter((p) => p.room === st.id);
+  const free = Math.max(0, st.slots - st.used);
+  const totalSlots = statuses.reduce((n, r) => n + r.slots, 0);
+  const secretsLeft = ROOMS.filter((r) => r.kennarten && !statuses.find((x) => x.id === r.id)!.unlocked).length;
 
-  function sow(seedId: string) {
+  function choose(id: RoomId) {
+    setRoomId(id);
+    try {
+      localStorage.setItem('flora-room', id);
+    } catch {
+      /* private mode */
+    }
+  }
+
+  function sow(seedId: string, speciesId: string) {
     let err: string | undefined;
+    let target: RoomId = 'anzucht';
     update((s) => {
-      const r = plantSeed(s, seedId, Date.now());
+      target = defaultRoom(s, speciesId);
+      const r = plantSeed(s, seedId, Date.now(), target);
       err = r.error;
       return r.state;
     });
     if (err) toast(err, 'warn');
-    else toast('🌱 Eingepflanzt! Stelle das Licht passend ein.', 'good');
+    else {
+      toast(`🌱 Eingepflanzt im ${roomInfo(target).name}!`, 'good');
+      choose(target);
+    }
   }
+
+  const tabs = statuses.filter((r) => r.unlocked || !roomInfo(r.id).kennarten);
 
   return (
     <div className={`screen ${climate.night ? 'night' : ''}`}>
       <div className="screen-head">
         <div>
           <h1>Gewächshaus</h1>
-          <div className="sub">{state.plants.length} von {BALANCE.greenhouseSlots} Beeten belegt</div>
+          <div className="sub">{state.plants.length} von {totalSlots} Beeten belegt · {statuses.filter((r) => r.unlocked).length - 1} Lebensräume offen</div>
         </div>
       </div>
 
@@ -88,12 +120,20 @@ export function Greenhouse() {
           <div className="hscroll">
             {state.seeds.map((seed) => {
               const sp = speciesById(state, seed.speciesId);
+              const target = defaultRoom(state, seed.speciesId);
+              const best = bestRoom(sp);
+              const tst = statuses.find((r) => r.id === target)!;
               return (
                 <div key={seed.id} className={`seed r-${rarityOf(sp)}`}>
                   <PlantArt species={sp} stage="samen" />
                   <div>
                     <b className="small">{sp.de}</b>
-                    <div><button className="link" onClick={() => sow(seed.id)} disabled={free <= 0}>{free > 0 ? 'Einpflanzen' : 'Kein Beet frei'}</button></div>
+                    <div className="tiny muted">passt in: {roomInfo(best).icon} {roomInfo(best).name}</div>
+                    <div>
+                      <button className="link" onClick={() => sow(seed.id, seed.speciesId)} disabled={tst.used >= tst.slots}>
+                        {tst.used >= tst.slots ? 'Kein Beet frei' : `Einpflanzen${target !== best ? ' (Anzuchthaus)' : ''}`}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -102,31 +142,69 @@ export function Greenhouse() {
         </section>
       )}
 
-      <div className="grid">
-        {state.plants.map((p) => {
-          const sp = speciesById(state, p.speciesId);
-          const wb = wellbeing(p, sp, climate);
-          const form = formOf(p, sp);
-          const color = wb.score >= 60 ? 'var(--leaf)' : wb.score >= 30 ? 'var(--warn)' : 'var(--danger)';
+      <div className="chips room-tabs" role="tablist" aria-label="Räume">
+        {tabs.map((r) => {
+          const info = roomInfo(r.id);
           return (
-            <button key={p.id} className={`tile bed r-${rarityOf(sp)}`} onClick={() => setOpen(p.id)}>
-              <PlantArt species={sp} stage={stageOf(p)} effect={form?.effect} master={p.level >= BALANCE.maxLevel} />
-              <span className="lvl">Lv {p.level}</span>
-              <span className="status">
-                {wb.issues.includes('Durst') && <span>💧</span>}
-                {wb.issues.includes('Hunger') && <span>🧪</span>}
-                {p.disease && <span>⚠️</span>}
-                {!p.disease && availableForms(p, sp).length > 0 && <span>✨</span>}
-              </span>
-              <div className="wb"><span style={{ width: `${wb.score}%`, background: color }} /></div>
-              <span className="tile-name">{sp.de}{form ? ` · ${form.name}` : ''}</span>
+            <button key={r.id} role="tab" className="chip" aria-pressed={r.id === st.id} onClick={() => choose(r.id)}>
+              {r.unlocked ? info.icon : '🔒'} {info.name}
+              {r.unlocked ? ` ${r.used}/${r.slots}` : ` ${r.found}/${r.need}`}
             </button>
           );
         })}
-        {Array.from({ length: Math.min(free, 3) }, (_, i) => (
-          <div key={i} className="tile bed empty">{state.seeds.length ? 'Freies Beet – Samen einpflanzen' : 'Freies Beet – entdecke draußen neue Arten'}</div>
-        ))}
+        {secretsLeft > 0 && <span className="chip" aria-disabled>✨ {secretsLeft} Geheimräume</span>}
       </div>
+
+      <section className="room-card">
+        <RoomScene id={st.id} className="room-scene" />
+        <div className="room-info">
+          <div className="row" style={{ justifyContent: 'space-between' }}>
+            <h2>{room.icon} {room.name}</h2>
+            <span className="tag">{room.code}</span>
+          </div>
+          <p className="small">{room.description}</p>
+          {st.id !== 'anzucht' && (
+            <p className="tiny muted">
+              Hält von selbst: {moistureWord(room.profile.M)} · {reactionWord(room.profile.R)} · {nutrientWord(room.profile.N)} · Licht {LIGHT_NAMES[setpoints(st.id).lamp]} · {temperatureWord(room.profile.T)}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {!st.unlocked ? (
+        <p className="notice">
+          🔒 Noch verschlossen. Entdecke draußen <b>{st.need - st.found}</b> weitere {st.need - st.found === 1 ? 'Art' : 'Arten'}, die hierher passen.
+        </p>
+      ) : (
+        <div className="grid">
+          {plants.map((p) => {
+            const sp = speciesById(state, p.speciesId);
+            const wb = wellbeing(p, sp, climate);
+            const form = formOf(p, sp);
+            const color = wb.score >= 60 ? 'var(--leaf)' : wb.score >= 30 ? 'var(--warn)' : 'var(--danger)';
+            return (
+              <button key={p.id} className={`tile bed r-${rarityOf(sp)}`} onClick={() => setOpen(p.id)}>
+                <PlantArt species={sp} stage={stageOf(p)} effect={form?.effect} master={p.level >= BALANCE.maxLevel} />
+                <span className="lvl">Lv {p.level}</span>
+                <span className="status">
+                  {wb.issues.includes('Durst') && <span>💧</span>}
+                  {wb.issues.includes('Hunger') && <span>🧪</span>}
+                  {p.disease && <span>⚠️</span>}
+                  {!p.disease && availableForms(p, sp).length > 0 && <span>✨</span>}
+                </span>
+                <div className="wb"><span style={{ width: `${wb.score}%`, background: color }} /></div>
+                <span className="tile-name">{sp.de}{form ? ` · ${form.name}` : ''}</span>
+              </button>
+            );
+          })}
+          {Array.from({ length: st.id === 'anzucht' ? Math.min(free, 3) : free }, (_, i) => (
+            <div key={i} className="tile bed empty">{state.seeds.length ? 'Freies Beet – Samen einpflanzen' : 'Freies Beet – entdecke draußen neue Arten'}</div>
+          ))}
+        </div>
+      )}
+      {st.unlocked && st.id !== 'anzucht' && st.slots < BALANCE.rooms.maxSlots && (
+        <p className="tiny muted">Mehr Beete: Für je {BALANCE.rooms.extraPer} weitere passende Arten wächst dieser Raum um ein Beet (bis {BALANCE.rooms.maxSlots}).</p>
+      )}
 
       {open && state.plants.some((p) => p.id === open) && <PlantSheet plantId={open} onClose={() => setOpen(null)} />}
     </div>
@@ -143,15 +221,26 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
   const stats = plantStats(p, sp);
   const form = formOf(p, sp);
   const fav = favouriteTraining(sp);
-  const conds = activeConditions(climate, p.zone);
+  const conds = activeConditions(climate, p.room);
   const trainBlock = canTrain(p);
   const evolvable = availableForms(p, sp);
   const wBand = waterBand(sp.eco);
   const nBand = nutrientBand(sp.eco);
   const rBand = reactionBand(sp.eco);
   const lamp = bestLamp(sp.eco);
-  const coolZone = sp.eco.T < BALANCE.eco.temperature.warmOkAbove;
-  const warmOnly = sp.eco.T > BALANCE.eco.temperature.coolOkBelow;
+  const best = bestRoom(sp);
+  const movable = roomStatuses(state).filter((r) => r.unlocked && (r.id === p.room || r.used < r.slots));
+
+  function move(room: RoomId) {
+    let err: string | undefined;
+    update((s) => {
+      const r = moveAction(s, plantId, room);
+      err = r.error;
+      return r.state;
+    });
+    if (err) toast(err, 'warn');
+    else if (room !== p.room) toast(`🏠 Umgezogen ins ${roomInfo(room).name}`, 'info');
+  }
 
   function doCare(a: CareId) {
     let res: ReturnType<typeof careAction>['result'] | undefined;
@@ -254,24 +343,35 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
             <button className="btn" onClick={() => doCare('ansaeuern')}>🍂 Laubhumus geben<small>Boden saurer</small></button>
             {p.disease && <button className="btn" onClick={() => doCare('behandeln')} disabled={state.items.heilmittel <= 0}>💊 {DISEASE_NAMES[p.disease]} behandeln<small>{state.items.heilmittel} übrig</small></button>}
           </div>
-          <div>
-            <div className="small" style={{ marginBottom: 6 }}>Licht – diese Art mag am liebsten <b>{LIGHT_NAMES[lamp]}</b> <span className="muted">(Zeigerwert {sp.eco.L.toLocaleString('de-DE')})</span></div>
-            <div className="seg">
-              {([1, 2, 3] as Level3[]).map((l) => (
-                <button key={l} aria-pressed={p.light === l} onClick={() => update((s) => lightAction(s, plantId, l))}>{LIGHT_NAMES[l]}</button>
-              ))}
+          {p.room === 'anzucht' ? (
+            <div>
+              <div className="small" style={{ marginBottom: 6 }}>Licht – diese Art mag am liebsten <b>{LIGHT_NAMES[lamp]}</b> <span className="muted">(Zeigerwert {sp.eco.L.toLocaleString('de-DE')})</span></div>
+              <div className="seg">
+                {([1, 2, 3] as Level3[]).map((l) => (
+                  <button key={l} aria-pressed={p.light === l} onClick={() => update((s) => lightAction(s, plantId, l))}>{LIGHT_NAMES[l]}</button>
+                ))}
+              </div>
             </div>
+          ) : (
+            <p className="small">Licht: <b>{LIGHT_NAMES[setpoints(p.room).lamp]}</b> – stellt der Raum ein. Die Art mag am liebsten {LIGHT_NAMES[lamp]}.</p>
+          )}
+        </section>
+
+        <section className="panel stack">
+          <h2>Raum</h2>
+          <p className="small">
+            Steht im <b>{roomInfo(p.room).icon} {roomInfo(p.room).name}</b>. Passt am besten in: <b>{roomInfo(best).icon} {roomInfo(best).name}</b>
+            {p.room === best ? ' ✓' : ''}
+          </p>
+          <p className="tiny muted">Diese Art mag es {temperatureWord(sp.eco.T)}.{p.room !== 'anzucht' ? ' Der Raum hält Wasser, Nährstoffe und Bodenreaktion von selbst.' : ' Im Anzuchthaus stellst du alles selbst ein.'}</p>
+          <div className="chips">
+            {movable.map((r) => (
+              <button key={r.id} className="chip" aria-pressed={r.id === p.room} onClick={() => move(r.id)}>
+                {roomInfo(r.id).icon} {roomInfo(r.id).name}{r.id === best ? ' ★' : ''}
+              </button>
+            ))}
           </div>
-          <div>
-            <div className="small" style={{ marginBottom: 6 }}>
-              Standort – diese Art mag es <b>{temperatureWord(sp.eco.T)}</b>
-              {coolZone ? ': am besten Höhenkammer' : warmOnly ? ': nicht in die Höhenkammer' : ''}
-            </div>
-            <div className="seg two">
-              <button aria-pressed={p.zone === 'tal'} onClick={() => update((s) => zoneAction(s, plantId, 'tal'))}>Tieflandbeet</button>
-              <button aria-pressed={p.zone === 'hoehe'} onClick={() => update((s) => zoneAction(s, plantId, 'hoehe'))}>Höhenkammer</button>
-            </div>
-          </div>
+          <p className="tiny muted">Umziehen geht in jeden offenen Raum mit freiem Beet. ★ = passt am besten.</p>
         </section>
 
         <section className="panel stack">

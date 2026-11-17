@@ -1,7 +1,7 @@
 // Bedürfnisse einer Art im Gewächshaus, berechnet aus den Zeigerwerten (EIVE, Skala 0–10).
 // Lage = was die Art bevorzugt, Nischenbreite = wie tolerant sie ist (breit = verzeiht mehr).
 import { BALANCE as B } from './config';
-import type { Eco, Level3, ZoneId } from './types';
+import type { Eco, Level3 } from './types';
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -40,8 +40,8 @@ export function lightPenalty(e: Eco, lamp: Level3): { penalty: number; diff: num
   return { penalty: Math.max(0, Math.abs(diff) - tol) * B.eco.light.perPoint, diff };
 }
 
-/** Temperature: cold-loving species want the Höhenkammer, warmth-loving ones suffer from frost and cold. */
-export function temperatureIssues(e: Eco, zone: ZoneId, frost: boolean, frostProof: boolean): { penalty: number; issues: string[] } {
+/** Temperature: the room has a temperature (Alpen cool, others mild); frost hurts warmth-loving species. */
+export function temperatureIssues(e: Eco, roomT: number, frost: boolean, frostProof: boolean): { penalty: number; issues: string[] } {
   const t = B.eco.temperature;
   let penalty = 0;
   const issues: string[] = [];
@@ -49,8 +49,11 @@ export function temperatureIssues(e: Eco, zone: ZoneId, frost: boolean, frostPro
     const p = Math.max(0, e.T - t.frostSafeBelow) * t.frostPerPoint;
     if (p > 0) { penalty += p; issues.push('Frost'); }
   }
-  if (zone === 'hoehe' && e.T > t.coolOkBelow) { penalty += (e.T - t.coolOkBelow) * t.perPoint; issues.push('Zu kalt in der Höhenkammer'); }
-  if (zone === 'tal' && e.T < t.warmOkAbove) { penalty += (t.warmOkAbove - e.T) * t.perPoint; issues.push('Zu warm – lieber Höhenkammer'); }
+  const diff = e.T - roomT;
+  if (Math.abs(diff) > t.tolerance) {
+    penalty += (Math.abs(diff) - t.tolerance) * t.perPoint;
+    issues.push(diff < 0 ? 'Zu warm hier' : 'Zu kalt hier');
+  }
   return { penalty, issues };
 }
 

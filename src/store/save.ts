@@ -3,7 +3,7 @@
 import { BALANCE, SAVE_VERSION } from '../game/config';
 import { makeDynamicSpecies } from '../game/catalog';
 import { newGame } from '../game/game';
-import type { GameState } from '../game/types';
+import type { GameState, GreenPlant } from '../game/types';
 
 export const SAVE_KEY = 'flora-save';
 export const BACKUP_KEY = 'flora-save-backup';
@@ -33,6 +33,14 @@ function migrate(file: SaveFile): SaveFile {
         plants: (s.plants ?? []).map((p) => ({ ...p, reaction: typeof p.reaction === 'number' ? p.reaction : BALANCE.eco.reaction.neutral })),
         extraSpecies: (s.extraSpecies ?? []).map((x) => ({ ...makeDynamicSpecies(x.sci === 'wissenschaftlicher Name unbekannt' ? '' : x.sci, x.de, x.family), id: x.id })),
       },
+    };
+  }
+  if (f.version < 3) {
+    // v3: Lebensraum-Räume. The old Tieflandbeet/Höhenkammer become the Anzuchthaus.
+    f = {
+      ...f,
+      version: 3,
+      state: { ...f.state, plants: f.state.plants.map(({ zone: _z, ...p }: GreenPlant & { zone?: string }) => ({ ...p, room: p.room ?? 'anzucht' })) },
     };
   }
   return f;
