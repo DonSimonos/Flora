@@ -229,7 +229,9 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
   const rBand = reactionBand(sp.eco);
   const lamp = bestLamp(sp.eco);
   const best = bestRoom(sp);
-  const movable = roomStatuses(state).filter((r) => r.unlocked && (r.id === p.room || r.used < r.slots));
+  const statusesNow = roomStatuses(state);
+  const bestSt = statusesNow.find((r) => r.id === best)!;
+  const others = statusesNow.filter((r) => r.unlocked && r.id !== p.room && r.id !== best && r.used < r.slots);
 
   function move(room: RoomId) {
     let err: string | undefined;
@@ -360,18 +362,38 @@ function PlantSheet({ plantId, onClose }: { plantId: string; onClose: () => void
         <section className="panel stack">
           <h2>Raum</h2>
           <p className="small">
-            Steht im <b>{roomInfo(p.room).icon} {roomInfo(p.room).name}</b>. Passt am besten in: <b>{roomInfo(best).icon} {roomInfo(best).name}</b>
-            {p.room === best ? ' ✓' : ''}
+            Steht im <b>{roomInfo(p.room).icon} {roomInfo(p.room).name}</b>.{' '}
+            {p.room !== 'anzucht' ? 'Der Raum hält Wasser, Nährstoffe und Bodenreaktion von selbst.' : 'Hier stellst du Wasser, Boden und Licht selbst ein.'}
           </p>
-          <p className="tiny muted">Diese Art mag es {temperatureWord(sp.eco.T)}.{p.room !== 'anzucht' ? ' Der Raum hält Wasser, Nährstoffe und Bodenreaktion von selbst.' : ' Im Anzuchthaus stellst du alles selbst ein.'}</p>
-          <div className="chips">
-            {movable.map((r) => (
-              <button key={r.id} className="chip" aria-pressed={r.id === p.room} onClick={() => move(r.id)}>
-                {roomInfo(r.id).icon} {roomInfo(r.id).name}{r.id === best ? ' ★' : ''}
-              </button>
-            ))}
-          </div>
-          <p className="tiny muted">Umziehen geht in jeden offenen Raum mit freiem Beet. ★ = passt am besten.</p>
+          {p.room === best ? (
+            <p className="tag good">✓ Steht schon im passenden Raum</p>
+          ) : (
+            <div className="move-box">
+              <div className="small">Passt am besten in:</div>
+              <b>{bestSt.unlocked || !roomInfo(best).kennarten ? `${roomInfo(best).icon} ${roomInfo(best).name}` : '✨ einen Geheimraum'}</b>
+              {bestSt.unlocked && bestSt.used < bestSt.slots ? (
+                <button className="btn primary block" onClick={() => move(best)}>Jetzt umziehen ★</button>
+              ) : !bestSt.unlocked ? (
+                <p className="small muted">
+                  🔒 Noch verschlossen. Entdecke draußen noch {bestSt.need - bestSt.found} {roomInfo(best).kennarten ? (bestSt.need - bestSt.found === 1 ? 'Kennart' : 'Kennarten') : bestSt.need - bestSt.found === 1 ? 'passende Art' : 'passende Arten'}, dann öffnet sich der Raum und du kannst hierher umziehen.
+                </p>
+              ) : (
+                <p className="small muted">Alle {bestSt.slots} Beete sind belegt. Mit weiteren passenden Funden bekommt der Raum mehr Beete.</p>
+              )}
+            </div>
+          )}
+          {others.length > 0 && (
+            <>
+              <div className="small">Oder umziehen nach:</div>
+              <div className="chips">
+                {others.map((r) => (
+                  <button key={r.id} className="chip" onClick={() => move(r.id)}>
+                    {roomInfo(r.id).icon} {roomInfo(r.id).name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </section>
 
         <section className="panel stack">
