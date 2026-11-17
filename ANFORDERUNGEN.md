@@ -88,8 +88,8 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
   Salzpflanzen über eine Artenliste, Geheimräume über ihre Kennarten.
 - Wirkung: Ein Raum hält seine Bedingungen (Wasser, Nährstoffe, Bodenreaktion, Licht, Temperatur)
   von selbst – kein zusätzlicher Wachstumsbonus. Unpassende Arten fühlen sich dort schlecht.
-- Freischalten durch Entdeckungen: 3 passende Arten; Geheimraum: 2 Kennarten oder eine gefährdete
-  Kennart (Rote Liste 0, 1, 2, 3, G, R). Beete: Start 2, je 3 weitere passende Arten +1, höchstens 8.
+- Freischalten durch Entdeckungen: 3 passende Arten bzw. beim Geheimraum 2 Kennarten – oder sofort
+  durch eine einzige gefährdete Art (Rote Liste 0, 1, 2, 3, G, R; nicht Vorwarnliste V). Beete: Start 2, je 3 weitere passende Arten +1, höchstens 8.
 - Jeder Raum hat ein eigenes gezeichnetes Bild.
 
 ## Erkennung

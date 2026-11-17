@@ -350,8 +350,10 @@ describe('Ökologie im Gewächshaus', () => {
     const { s, plantId } = withPlant('edelweiss');
     const sp = speciesById(s, 'edelweiss');
     const c = climateAt(T0);
-    const anzucht = gh.wellbeing(s.plants[0], sp, c);
-    const alpen = gh.wellbeing({ ...s.plants.find((p) => p.id === plantId)!, room: 'alpen' }, sp, c);
+    const plant = s.plants.find((p) => p.id === plantId)!;
+    expect(plant.room).toBe('alpen'); // RL 2 öffnet die Alpen sofort, der Samen landet dort
+    const anzucht = gh.wellbeing({ ...plant, room: 'anzucht' }, sp, c);
+    const alpen = gh.wellbeing(plant, sp, c);
     expect(anzucht.issues).toContain('Zu warm hier');
     expect(alpen.score).toBeGreaterThan(anzucht.score);
   });
@@ -391,13 +393,22 @@ describe('Lebensraum-Räume', () => {
 
   it('ein Raum öffnet sich nach 3 passenden Arten und wächst mit', async () => {
     const { roomStatus } = await import('./rooms');
-    let s = discover(['sonnentau', 'wollgras']);
-    expect(roomStatus(s, 'moor').unlocked).toBe(false);
-    s = discover(['sonnentau', 'wollgras', 'moorlilie']);
-    expect(roomStatus(s, 'moor')).toMatchObject({ unlocked: true, slots: 2 });
-    expect(s.revealQueue.at(-1)?.newRooms).toEqual(['moor']);
+    let s = discover(['besenheide', 'heidelbeere']); // beide ungefährdet
+    expect(roomStatus(s, 'heide').unlocked).toBe(false);
+    s = discover(['besenheide', 'heidelbeere', 'preiselbeere']);
+    expect(roomStatus(s, 'heide')).toMatchObject({ unlocked: true, slots: 2 });
+    expect(s.revealQueue.at(-1)?.newRooms).toEqual(['heide']);
     s = discover(['sonnentau', 'wollgras', 'moorlilie', 'glockenheide', 'moosbeere', 'sumpfporst']);
     expect(roomStatus(s, 'moor').slots).toBe(3);
+  });
+
+  it('eine gefährdete Art öffnet ihren Raum sofort, die Vorwarnliste nicht', async () => {
+    const { roomStatus } = await import('./rooms');
+    let s = discover(['wasserfeder']); // V
+    expect(roomStatus(s, 'teich').unlocked).toBe(false);
+    s = discover(['wasserschlauch']); // RL 3
+    expect(roomStatus(s, 'teich')).toMatchObject({ unlocked: true, slots: 2 });
+    expect(s.revealQueue.at(-1)?.newRooms).toEqual(['teich']);
   });
 
   it('Geheimraum: eine gefährdete Kennart öffnet sofort, sonst zwei', async () => {
@@ -429,8 +440,8 @@ describe('Lebensraum-Räume', () => {
   });
 
   it('Umziehen nur in offene Räume mit freiem Beet', () => {
-    const { s, plantId } = withPlant('sonnentau');
-    expect(game.moveAction(s, plantId, 'moor').error).toMatch(/nicht freigeschaltet/);
+    const { s, plantId } = withPlant('besenheide'); // ungefährdet: Heidebeet bleibt zu
+    expect(game.moveAction(s, plantId, 'heide').error).toMatch(/nicht freigeschaltet/);
   });
 
   it('Spielstände der Version 2 kommen ins Anzuchthaus', () => {
