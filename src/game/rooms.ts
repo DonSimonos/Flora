@@ -35,6 +35,7 @@ export function bestRoom(sp: Species): RoomId {
   return best;
 }
 
+/** Rote Liste im engeren Sinn (ohne Vorwarnliste V und D). */
 const ENDANGERED = new Set(['0', '1', '2', '3', 'G', 'R']);
 
 export interface RoomStatus {
@@ -56,16 +57,18 @@ export function roomStatuses(state: GameState): RoomStatus[] {
     if (!sp) continue;
     const r = bestRoom(sp);
     fit.set(r, (fit.get(r) ?? 0) + 1);
-    if (roomInfo(r).kennarten && ENDANGERED.has(sp.rl)) rareKenn.add(r);
+    if (ENDANGERED.has(sp.rl)) rareKenn.add(r);
   }
   return ROOMS.map((r) => {
     const used = state.plants.filter((p) => p.room === r.id).length;
     if (r.id === 'anzucht') return { id: r.id, found: 0, need: 0, unlocked: true, slots: B.greenhouseSlots, used };
     const found = fit.get(r.id) ?? 0;
-    // Geheimraum: eine gefährdete Kennart öffnet sofort, sonst zwei Kennarten
-    const need = r.kennarten ? (rareKenn.has(r.id) ? 1 : B.rooms.secretUnlockAt) : B.rooms.unlockAt;
+    // Eine gefährdete Art (Rote Liste 0–3, G, R) öffnet ihren Raum sofort.
+    // Sonst: normale Räume 3 passende Arten, Geheimräume 2 Kennarten.
+    const baseNeed = r.kennarten ? B.rooms.secretUnlockAt : B.rooms.unlockAt;
+    const need = rareKenn.has(r.id) ? 1 : baseNeed;
     const unlocked = found >= need;
-    const slots = unlocked ? Math.min(B.rooms.maxSlots, B.rooms.startSlots + Math.floor((found - need) / B.rooms.extraPer)) : 0;
+    const slots = unlocked ? Math.min(B.rooms.maxSlots, B.rooms.startSlots + Math.floor(Math.max(0, found - baseNeed) / B.rooms.extraPer)) : 0;
     return { id: r.id, found, need, unlocked, slots, used };
   });
 }

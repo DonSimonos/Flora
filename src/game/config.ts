@@ -92,7 +92,7 @@ export const BALANCE = {
   greenhouseSlots: 12,
   /** Lebensraum-Räume: freischalten durch Entdeckungen, Beete wachsen mit, Bedingungen stellen sich von selbst ein. */
   rooms: {
-    unlockAt: 3, // passende entdeckte Arten bis der Raum öffnet
+    unlockAt: 3, // passende entdeckte Arten bis der Raum öffnet – eine gefährdete Art (RL 0–3, G, R) öffnet sofort
     secretUnlockAt: 2, // Geheimraum: zwei Kennarten – oder eine gefährdete (Rote Liste 0–3, G, R)
     startSlots: 2,
     extraPer: 3, // je 3 weitere passende Arten ein Beet mehr
