@@ -76,10 +76,25 @@ Eigenständige Spielwelt und eigenes Design (kein Nachbau eines bestehenden Spie
   Lichtstufe (weiter 3 Stufen), Temperatur (Frost, Höhenkammer). Neue Pflege: „Kalk streuen“ und
   „Laubhumus geben“; der Boden kehrt langsam zu neutral zurück.
 
+## Lebensraum-Räume im Gewächshaus (seit 17.11.2026)
+- Grob angelehnt an die Hauptgruppen des Biotoptypenschlüssels NRW (LANUV), ergänzt um Alpen und Küste.
+- Anzuchthaus (12 Beete, alles selbst einstellen) plus 14 Räume: Waldboden, Hecke & Waldsaum,
+  Moorbecken, Heidebeet, Kalkmagerrasen, Wiese & Weide, Feucht- & Nasswiese, Teich & Ufer,
+  Fließgewässer, Felsgarten, Alpen (ersetzt die Höhenkammer), Acker & Wegrand, Mauer & Schotter,
+  Salzwiese & Düne.
+- 9 Geheimräume mit Kennarten: Galmeiflur, Hofsäume, Blänken, Feuchte Wegränder, Heideweiher,
+  Quellflur, Kalkscherbenacker, Schlucht & Brunnenschacht, Schlagflur.
+- Zuordnung einer Art automatisch über die Zeigerwerte (Raumprofile in `src/data/rooms.ts`);
+  Salzpflanzen über eine Artenliste, Geheimräume über ihre Kennarten.
+- Wirkung: Ein Raum hält seine Bedingungen (Wasser, Nährstoffe, Bodenreaktion, Licht, Temperatur)
+  von selbst – kein zusätzlicher Wachstumsbonus. Unpassende Arten fühlen sich dort schlecht.
+- Freischalten durch Entdeckungen: 3 passende Arten; Geheimraum: 2 Kennarten oder eine gefährdete
+  Kennart (Rote Liste 0, 1, 2, 3, G, R). Beete: Start 2, je 3 weitere passende Arten +1, höchstens 8.
+- Jeder Raum hat ein eigenes gezeichnetes Bild.
+
 ## Erkennung
 - Pl@ntNet ist eingerichtet (seit 16.11.2026): Schlüssel als GitHub-Secret `PLANTNET_KEY`,
   bei Pl@ntNet freigegeben für `https://donsimonos.github.io`. Kostenlos bis 500 Erkennungen pro Tag.
 
 ## Offene Punkte
-- Ausbau des Gewächshauses: Vorschläge A–G vom 16.11.2026 (empfohlen: Lebensraum-Räume, Bestäuber,
-  danach Wettbewerbe) – Entscheidung steht aus.
+- Weiterer Ausbau des Gewächshauses: Bestäuber, Wettbewerbe (Vorschläge vom 16.11.2026) – offen.

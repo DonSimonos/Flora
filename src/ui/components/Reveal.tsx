@@ -1,6 +1,7 @@
 import { abilityInfo } from '../../data/abilities';
 import { speciesById } from '../../game/catalog';
 import { needsText } from '../../game/ecology';
+import { roomInfo } from '../../data/rooms';
 import { popReveal } from '../../game/game';
 import { rarityInfo, rarityOf, rarityRank, RL_TEXT } from '../../game/rarity';
 import { update, useGame } from '../../store/store';
@@ -49,6 +50,9 @@ export function Reveal() {
         </div>
       )}
       <div className="rewards">
+        {r.newRooms?.map((id) => (
+          <span key={id} className="tag good">{roomInfo(id).kennarten ? '✨ Geheimraum entdeckt' : '🏠 Neuer Raum'}: {roomInfo(id).icon} {roomInfo(id).name}</span>
+        ))}
         {r.seedGained && <span className="tag good">🌱 1 Samen für dein Gewächshaus</span>}
         {r.items.duenger ? <span className="tag">🧪 +{r.items.duenger} Dünger</span> : null}
         {r.items.heilmittel ? <span className="tag">💊 +{r.items.heilmittel} Heilmittel</span> : null}

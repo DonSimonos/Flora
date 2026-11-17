@@ -13,6 +13,8 @@ import { REDLIST_LICENSE } from '../../game/redlist';
 import { SourcesSheet } from '../components/Sources';
 import { EcoPanel } from '../components/EcoPanel';
 import { needsText } from '../../game/ecology';
+import { bestRoom } from '../../game/rooms';
+import { roomInfo } from '../../data/rooms';
 import { dateText, Photo, RarityBadge, Sheet, SpeciesCard, TYPE_NAMES } from '../components/common';
 
 
@@ -157,6 +159,7 @@ function SpeciesSheet({ species: s, onClose }: { species: Species; onClose: () =
             {s.endemic && <><dt>Besonders</dt><dd>Endemit – kommt weltweit nur in Deutschland vor</dd></>}
             <dt>Quelle</dt><dd className="tiny muted">Rote Liste: Metzing et al. (2018), {REDLIST_LICENSE}</dd>
             <dt>Mag</dt><dd>{needsText(s.eco)}</dd>
+            <dt>Gewächshaus</dt><dd>{roomInfo(bestRoom(s)).icon} {roomInfo(bestRoom(s)).name}</dd>
           </dl>
         </section>
 

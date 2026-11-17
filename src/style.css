@@ -348,3 +348,10 @@ p { margin: 0; }
 .eco-scale { position: relative; height: 10px; border-radius: 6px; margin-top: 4px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12)); }
 .eco-scale i { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: rgba(127, 209, 140, 0.35); }
 .eco-scale b { position: absolute; top: -3px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--leaf); box-shadow: 0 0 0 3px var(--bg-2); }
+
+/* ---------- Lebensraum-Räume ---------- */
+.room-tabs .chip[aria-disabled] { opacity: 0.6; }
+.room-card { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+.room-scene { display: block; width: 100%; height: 110px; }
+.room-info { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+.room-info h2 { font-size: 20px; }

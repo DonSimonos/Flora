@@ -5,8 +5,10 @@ import { findSpecies, makeDynamicSpecies, matchSpecies, speciesById } from './ca
 import * as gh from './greenhouse';
 import { rarityOf } from './rarity';
 import { rngFor } from './rng';
+import { bestRoom, roomStatus, unlockedRooms } from './rooms';
+import { roomInfo } from '../data/rooms';
 import type {
-  Candidate, CareId, Find, GameState, ItemId, Level3, Reveal, Seed, TrainingId, ZoneId,
+  Candidate, CareId, Find, GameState, ItemId, Level3, Reveal, RoomId, Seed, TrainingId,
 } from './types';
 
 export function newGame(now = new Date()): GameState {
@@ -100,7 +102,10 @@ export function confirmFind(state: GameState, findId: string, choice: Choice): G
     });
   }
 
-  const reveal: Reveal = { findId, speciesId, isNew, seedGained, items, xpToPlants };
+  const roomsBefore = unlockedRooms(s);
+  const roomsAfter = isNew ? unlockedRooms({ ...s, discovered: [...s.discovered, speciesId] }) : roomsBefore;
+  const newRooms = roomsAfter.filter((r) => !roomsBefore.includes(r));
+  const reveal: Reveal = { findId, speciesId, isNew, seedGained, items, xpToPlants, ...(newRooms.length ? { newRooms } : {}) };
   return {
     ...s,
     finds: s.finds.map((f) =>
@@ -133,12 +138,28 @@ function addItems(base: Record<ItemId, number>, add: Partial<Record<ItemId, numb
 
 // ---------- Gewächshaus ----------
 
-export function plantSeed(state: GameState, seedId: string, now: number): { state: GameState; error?: string } {
+/** Room a seed would go to: its own habitat room if open and free, otherwise the Anzuchthaus. */
+export function defaultRoom(state: GameState, speciesId: string): RoomId {
+  const r = bestRoom(speciesById(state, speciesId));
+  const st = roomStatus(state, r);
+  return st.unlocked && st.used < st.slots ? r : 'anzucht';
+}
+
+function roomFull(state: GameState, room: RoomId): string | null {
+  const st = roomStatus(state, room);
+  if (!st.unlocked) return `${roomInfo(room).name} ist noch nicht freigeschaltet.`;
+  if (st.used >= st.slots) return `Im ${roomInfo(room).name} ist kein Beet mehr frei.`;
+  return null;
+}
+
+export function plantSeed(state: GameState, seedId: string, now: number, room?: RoomId): { state: GameState; error?: string } {
   const seed = state.seeds.find((x) => x.id === seedId);
   if (!seed) return { state, error: 'Samen nicht gefunden.' };
-  if (state.plants.length >= B.greenhouseSlots) return { state, error: 'Alle Beete sind belegt.' };
+  const target = room ?? defaultRoom(state, seed.speciesId);
+  const full = roomFull(state, target);
+  if (full) return { state, error: full };
   const sp = speciesById(state, seed.speciesId);
-  const plant = gh.newPlant(uid(), seed.id, seed.findId, sp, now);
+  const plant = gh.newPlant(uid(), seed.id, seed.findId, sp, now, target);
   return {
     state: { ...state, seeds: state.seeds.filter((x) => x.id !== seedId), plants: [...state.plants, plant] },
   };
@@ -189,9 +210,12 @@ export function lightAction(state: GameState, plantId: string, light: Level3): G
   return replacePlant(state, gh.setLight(p, light));
 }
 
-export function zoneAction(state: GameState, plantId: string, zone: ZoneId): GameState {
+export function moveAction(state: GameState, plantId: string, room: RoomId): { state: GameState; error?: string } {
   const p = state.plants.find((x) => x.id === plantId)!;
-  return replacePlant(state, gh.setZone(p, zone));
+  if (p.room === room) return { state };
+  const full = roomFull(state, room);
+  if (full) return { state, error: full };
+  return { state: replacePlant(state, gh.setRoom(p, room)) };
 }
 
 export function evolveAction(state: GameState, plantId: string, formId: string): { state: GameState; result: gh.ActionResult } {

@@ -44,7 +44,8 @@ export type CareId = 'giessen' | 'duengen' | 'boden' | 'schnitt' | 'behandeln' |
 export type TrainingId = 'wachstum' | 'wurzel' | 'licht' | 'resistenz' | 'anpassung';
 export type ConditionId = 'nacht' | 'regen' | 'sonne' | 'nebel' | 'frost' | 'hoehe';
 export type DiseaseId = 'mehltau' | 'blattlaeuse' | 'wurzelfaeule';
-export type ZoneId = 'tal' | 'hoehe';
+export type { RoomId } from '../data/rooms';
+import type { RoomId } from '../data/rooms';
 export type ItemId = 'duenger' | 'heilmittel';
 
 /** What unlocks an evolution form (besides the minimum level). */
@@ -154,7 +155,8 @@ export interface GreenPlant {
   energy: number; // 0..100, spent on training
   overgrowth: number; // 0..100, reset by pruning
   light: Level3; // lamp setting
-  zone: ZoneId;
+  /** Raum im Gewächshaus (Anzuchthaus oder Lebensraum-Raum). */
+  room: RoomId;
   disease: DiseaseId | null;
   trainCount: Record<TrainingId, number>;
   condCount: Record<ConditionId, number>;
@@ -190,4 +192,6 @@ export interface Reveal {
   seedGained: boolean;
   items: Partial<Record<ItemId, number>>;
   xpToPlants: number;
+  /** Lebensraum-Räume, die dieser Fund freigeschaltet hat. */
+  newRooms?: RoomId[];
 }

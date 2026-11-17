@@ -1,7 +1,7 @@
 // Zentrale Spielbalance. Alle Zahlen, die das Spielgefühl bestimmen, stehen hier.
 import type { ConditionId, RarityId, StatId } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const RARITIES: { id: RarityId; name: string; color: string; stars: number }[] = [
   { id: 'gewoehnlich', name: 'Gewöhnlich', color: '#9fb39a', stars: 1 },
@@ -66,7 +66,7 @@ export const BALANCE = {
     band: { minHalf: 9, maxHalf: 22, perWidth: 3 }, // half range width from niche width
     reaction: { minHalf: 0.8, maxHalf: 2.4, perWidth: 0.35, perPoint: 9, drift: 0.03, neutral: 5.5, step: 1.5 },
     light: { minTol: 0.8, maxTol: 2.4, perWidth: 0.3, perPoint: 7 },
-    temperature: { frostSafeBelow: 3.5, frostPerPoint: 4, coolOkBelow: 5.5, warmOkAbove: 2.5, perPoint: 5 },
+    temperature: { frostSafeBelow: 3.5, frostPerPoint: 4, tolerance: 2.5, perPoint: 5 },
   },
 
   // --- Fähigkeiten und Entwicklung ---
@@ -90,6 +90,16 @@ export const BALANCE = {
   repeatFindXp: (level: number) => 30 + 6 * level,
   startItems: { duenger: 5, heilmittel: 2 },
   greenhouseSlots: 12,
+  /** Lebensraum-Räume: freischalten durch Entdeckungen, Beete wachsen mit, Bedingungen stellen sich von selbst ein. */
+  rooms: {
+    unlockAt: 3, // passende entdeckte Arten bis der Raum öffnet
+    secretUnlockAt: 2, // Geheimraum: zwei Kennarten – oder eine gefährdete (Rote Liste 0–3, G, R)
+    startSlots: 2,
+    extraPer: 3, // je 3 weitere passende Arten ein Beet mehr
+    maxSlots: 8,
+    pull: { water: 15, nutrients: 4, reaction: 0.3 }, // pro Stunde Richtung Raumbedingungen
+    weights: { M: 1.3, N: 1, R: 1, L: 1.3, T: 1.5 },
+  },
 } as const;
 
 /** Klima im Gewächshaus: wechselt alle `weatherBlockHours` Stunden, reproduzierbar aus dem Datum. */
